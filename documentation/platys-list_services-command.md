@@ -8,10 +8,8 @@ Usage: platys list_services [OPTIONS]
 Options:
   -sn, --stack-name TEXT     the platform stack image  [default:
                              trivadis/platys-modern-data-platform]
-
   -sv, --stack-version TEXT  the platform stack image version to use
                              [default: latest]
-
   -h, --help                 Show this message and exit.
 ```
 

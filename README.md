@@ -19,7 +19,7 @@ The user of `platys` can choose which services to use from a list of supported s
 
 A concrete _Platform_ is always generated based on a given _Platform Stack_. A platform stack defines the set of available and usable services and has a name and a version. 
 
-Currently the following Platform Stack is available:
+Currently only one Platform Stack is available:
 
 * [`modern-data-platform`](./platform-stacks/modern-data-platform) - a Platform Stack for supporting a Modern (Analytical) Data Platforms
 
@@ -61,6 +61,7 @@ See [What's new?](./documentation/changes.md) for a detailed list of changes.
 * [Frequently Asked Questions](./documentation/faq.md)
 * [Command line reference](./documentation/command-line-ref.md)
 * [Glossary of Terms](./documentation/glossary.md)
+* [Available Platform Stacks](./platform-stacks)
 
 **Development**
 
