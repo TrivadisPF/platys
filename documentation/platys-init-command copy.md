@@ -14,20 +14,28 @@ Usage: platys init [OPTIONS]
 Options:
   -n, --platform-name TEXT        the name of the platform to generate.
                                   [required]
+
   -sn, --stack-name TEXT          the platform stack image  [default:
                                   trivadis/platys-modern-data-platform]
+
   -sv, --stack-version TEXT       the platform stack image version to use
                                   [default: latest]
+
   -cf, --config-filename TEXT     the name of the local config file.
                                   [default: config.yml]
+
   -sc, --seed-config TEXT         the name of a predefined stack to base this
                                   new platform on
+
   -f, --force                     If specified, this command will overwrite
                                   any existing config file
+
   -hw, --hw-arch [ARM|ARM64|x86-64]
                                   Hardware architecture for the platform
   -s, --enable-services TEXT      List of services to enable in the config
                                   file
+
   -h, --help                      Show this message and exit.
+
 ```
 
