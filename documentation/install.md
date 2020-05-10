@@ -1,6 +1,6 @@
 # Installing `platys`
 
-You can currenty install `platys` on macOS and 64-bit Linux only, but we are working on a plaform-independent version, to be released with the final 1.2.0 version.
+You can install `platys` on Windows, Mac OS-X and 64-bit Linux.
 
 ## Prerequisites
 

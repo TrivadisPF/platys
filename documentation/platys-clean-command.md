@@ -1,11 +1,13 @@
-# platys list_services
+# platys clean
 
 ```
-Usage: platys list_services [OPTIONS]
-
-  Shows the services interfaces of the stack, web and/or apis
+Usage: platys clean [OPTIONS]
 
 Options:
+  -f, --folder TEXT          the path base folder that will be used to clean:
+                             container-volume will be appended to the path
+                             [required]
+
   -sn, --stack-name TEXT     the platform stack image  [default:
                              trivadis/platys-modern-data-platform]
 
@@ -13,5 +15,5 @@ Options:
                              [default: latest]
 
   -h, --help                 Show this message and exit.
-```
 
+```
