@@ -66,9 +66,9 @@ def cli():
 @click.option('-cu', '--config-url', 'config_url', type=click.STRING, help='the URL to a remote config file')
 @click.option('-de', '--del-empty-lines', 'del_empty_lines', default=True, show_default=True, help='remove empty lines from the docker-compose.yml file.')
 @click.option('--structure', 'structure', type=click.Choice(['flat', 'subfolder']),
-              help='defines the where the stack will be generated '
-                   'flat : as in same folder as script generate the stack into same folder as config.yml'
-                   'subfolder : generate the stack into a subfolder, which by default is the name of the platform provided when initializing the stack'
+              help='defines the structure of the generated platform '
+                   '- flat = platform is generate on the level of the config.yml or '
+                   '- subfolder = platform is generated into a subfolder, named to the value of --platform-name'
               )
 @click.option('-v', '--verbose', is_flag=True, default=False, show_default=True, help='Verbose logging')
 def gen(config_filename, config_url, del_empty_lines, structure, verbose):
@@ -154,9 +154,9 @@ def gen(config_filename, config_url, del_empty_lines, structure, verbose):
 @click.option('-hw', '--hw-arch', 'hw_arch', type=click.Choice(['ARM', 'ARM64', 'x86-64']), default='x86-64', help='Hardware architecture for the platform')
 @click.option('-s', '--enable-services', 'enable_services', help='List of services to enable in the config file')
 @click.option('--structure', 'structure', type=click.Choice(['flat', 'subfolder']),
-              help='defines the where the stack will be generated '
-                   'flat : as in same folder as script generate the stack into same folder as config.yml'
-                   'subfolder : generate the stack into a subfolder, which by default is the name of the platform provided when initializing the stack'
+              help='defines the structure of the generated platform '
+                   '- flat = platform is generate on the level of the config.yml or '
+                   '- subfolder = platform is generated into a subfolder, named to the value of --platform-name'
               )
 def init(platform_name, stack_name, stack_version, config_filename, seed_config, force, hw_arch, enable_services, structure):
     """Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial
