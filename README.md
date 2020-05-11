@@ -19,7 +19,7 @@ A concrete _Platform_ is always generated based on a given _Platform Stack_. A p
 
 Currently the following Platform Stack is available:
 
-* [`modern-data-platform`](./platform-stacks/modern-data-platform) - a Platform Stack for supporting a Modern (Analytical) Data Platforms
+* [`modern-data-platform`](https://github.com/TrivadisPF/platys-modern-data-platform) - a Platform Stack for supporting a Modern (Analytical) Data Platforms
 
 In the future, other platform stacks might be added.
 
