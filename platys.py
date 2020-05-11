@@ -176,34 +176,35 @@ def init(platform_name, stack_name, stack_version, config_filename, seed_config,
         tar_file.extractall(path="./")
         tar_file.close()
 
-    if enable_services:
-        yaml = ruamel.yaml.YAML()
-        yaml.indent(sequence=18)
-        yaml.preserve_quotes = True
 
-        services = enable_services.split(',')
 
-        with open(os.path.join(sys.path[0], "config.yml"), 'r') as file:
-            config_yml = yaml.load(file)
-            config_yml['platys']['platform-name'] = platform_name
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(sequence=18)
+    yaml.preserve_quotes = True
 
-            if(structure):
-                config_yml['platys']['structure'] = structure
+    with open(os.path.join(sys.path[0], "config.yml"), 'r') as file:
+        config_yml = yaml.load(file)
+        config_yml['platys']['platform-name'] = platform_name
 
+        if(structure):
+            config_yml['platys']['structure'] = structure
+
+        if enable_services:
+            services = enable_services.split(',')
             for s in services:
                 if s + '_enable' in config_yml:
                     config_yml[s + '_enable'] = True
 
-        keys_to_del = []
+            keys_to_del = []
 
-        for key, value in config_yml.items():
-            if not contained(services, key) and key != "platys":
-                print(f"adding {key} to deletion array")
-                keys_to_del.append(key)
+            for key, value in config_yml.items():
+                if not contained(services, key) and key != "platys":
+                    print(f"adding {key} to deletion array")
+                    keys_to_del.append(key)
 
-        for key in [key for key in config_yml if key in keys_to_del]:
-            print(f"about to delete {key} to deletion array")
-            del config_yml[key]
+            for key in [key for key in config_yml if key in keys_to_del]:
+                print(f"about to delete {key} to deletion array")
+                del config_yml[key]
 
         with open(os.path.join(sys.path[0], "config.yml"), 'w') as file:
             yaml.dump(config_yml, file, transform=PushRootLeft(6))
