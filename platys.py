@@ -66,7 +66,7 @@ def cli():
 @click.option('-cu', '--config-url', 'config_url', type=click.STRING, help='the URL to a remote config file')
 @click.option('-de', '--del-empty-lines', 'del_empty_lines', default=True, show_default=True, help='remove empty lines from the docker-compose.yml file.')
 @click.option('--structure', 'structure', type=click.Choice(['flat', 'subfolder']),
-              help='defines the structure of the generated platform '
+              help='defines the structure of the generated platform (deprecated and now part of init) '
                    '- flat = platform is generate on the level of the config.yml or '
                    '- subfolder = platform is generated into a subfolder, named to the value of --platform-name'
               )
