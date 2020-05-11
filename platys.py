@@ -53,7 +53,7 @@ def check_node_limits(config_yml: Dict[str, int]):
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(__version__)
+@click.version_option(__version__, message='%(prog)s - Trivadis Platform in a Box - v%(version)s\nhttps://github.com/trivadispf/platys\nCopyright (c) 2018-2020, Trivadis AG')
 def cli():
     pass
 
