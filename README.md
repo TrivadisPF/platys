@@ -5,9 +5,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 # platys - Trivadis Platform in a Box
-Copyright (c) 2019-2020 Trivadis
-
-THIS IS STILL WORK IN PROGRESS .... USE IT WITH CAUTION! 
+Copyright (c) 2018-2020 Trivadis
 
 ## What is `platys`?
 
