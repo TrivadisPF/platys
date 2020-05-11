@@ -53,7 +53,7 @@ def check_node_limits(config_yml: Dict[str, int]):
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.version_option(__version__)
+@click.version_option(__version__, message='%(prog)s - Trivadis Platform in a Box - v%(version)s\nhttps://github.com/trivadispf/platys\nCopyright (c) 2018-2020, Trivadis AG')
 def cli():
     pass
 
@@ -66,7 +66,7 @@ def cli():
 @click.option('-cu', '--config-url', 'config_url', type=click.STRING, help='the URL to a remote config file')
 @click.option('-de', '--del-empty-lines', 'del_empty_lines', default=True, show_default=True, help='remove empty lines from the docker-compose.yml file.')
 @click.option('--structure', 'structure', type=click.Choice(['flat', 'subfolder']),
-              help='defines the structure of the generated platform '
+              help='defines the structure of the generated platform (deprecated and now part of init) '
                    '- flat = platform is generate on the level of the config.yml or '
                    '- subfolder = platform is generated into a subfolder, named to the value of --platform-name'
               )
@@ -176,34 +176,35 @@ def init(platform_name, stack_name, stack_version, config_filename, seed_config,
         tar_file.extractall(path="./")
         tar_file.close()
 
-    if enable_services:
-        yaml = ruamel.yaml.YAML()
-        yaml.indent(sequence=18)
-        yaml.preserve_quotes = True
 
-        services = enable_services.split(',')
 
-        with open(os.path.join(sys.path[0], "config.yml"), 'r') as file:
-            config_yml = yaml.load(file)
-            config_yml['platys']['platform-name'] = platform_name
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(sequence=18)
+    yaml.preserve_quotes = True
 
-            if(structure):
-                config_yml['platys']['structure'] = structure
+    with open(os.path.join(sys.path[0], "config.yml"), 'r') as file:
+        config_yml = yaml.load(file)
+        config_yml['platys']['platform-name'] = platform_name
 
+        if(structure):
+            config_yml['platys']['structure'] = structure
+
+        if enable_services:
+            services = enable_services.split(',')
             for s in services:
                 if s + '_enable' in config_yml:
                     config_yml[s + '_enable'] = True
 
-        keys_to_del = []
+            keys_to_del = []
 
-        for key, value in config_yml.items():
-            if not contained(services, key) and key != "platys":
-                print(f"adding {key} to deletion array")
-                keys_to_del.append(key)
+            for key, value in config_yml.items():
+                if not contained(services, key) and key != "platys":
+                    print(f"adding {key} to deletion array")
+                    keys_to_del.append(key)
 
-        for key in [key for key in config_yml if key in keys_to_del]:
-            print(f"about to delete {key} to deletion array")
-            del config_yml[key]
+            for key in [key for key in config_yml if key in keys_to_del]:
+                print(f"about to delete {key} to deletion array")
+                del config_yml[key]
 
         with open(os.path.join(sys.path[0], "config.yml"), 'w') as file:
             yaml.dump(config_yml, file, transform=PushRootLeft(6))

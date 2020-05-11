@@ -13,19 +13,15 @@ Usage: platys gen [OPTIONS]
 Options:
   -cf, --config-filename TEXT   the name of the local config file.  [default:
                                 config.yml]
-
   -cu, --config-url TEXT        the URL to a remote config file
   -de, --del-empty-lines TEXT   remove empty lines from the docker-compose.yml
                                 file.  [default: True]
-
-  --structure [flat|subfolder]  defines the where the stack will be generated
-                                flat : as in same folder as script generate
-                                the stack into same folder as
-                                config.ymlsubfolder : generate the stack into
-                                a subfolder, which by default is the name of
-                                the platform provided when initializing the
-                                stack
-
+  --structure [flat|subfolder]  defines the structure of the generated
+                                platform (deprecated and now part of init) -
+                                flat = platform is generate on the level of
+                                the config.yml or - subfolder = platform is
+                                generated into a subfolder, named to the value
+                                of --platform-name
   -v, --verbose                 Verbose logging  [default: False]
   -h, --help                    Show this message and exit.
 ```
