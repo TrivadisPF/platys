@@ -1,10 +1,13 @@
 package cmd
 
 import (
-
+	"fmt"
 	"github.com/spf13/cobra"
-
+	"gopkg.in/yaml.v2"
+	"regexp"
 )
+
+var serviceRegex = regexp.MustCompile(`(?P<service>[A-Z0-9_-]+)_enable`)
 
 func init() {
 	rootCmd.AddCommand(listServicesCmd)
@@ -13,24 +16,25 @@ func init() {
 var listServicesCmd = &cobra.Command{
 	Use:   "list_services",
 	Short: "List the services",
-	Long:  `List the services contained in the given version of the platy`,
+	Long:  `List the services contained in the given version of the platys tool`,
 	Run: func(cmd *cobra.Command, args []string) {
-		pullConfig()
 
-	/*	tar_config = pull_config(Stack, Version)
+		var ymlConfig map[interface{}]interface{}
+		err := yaml.Unmarshal([]byte(pullConfig()), &ymlConfig)
+		if err != nil {
+			panic(err)
+		}
 
-		// extract the config file from the tar in to the current folder
-		tar_file = tarfile.open(tar_config)
-		tar_file.extractall(path=tempfile.gettempdir())
-		tar_file.close()
-		yaml = ruamel.yaml.YAML()
-		with open(rf'{tempfile.gettempdir()}/config.yml') as file:
-		config_yml = yaml.load(file)
-		for c in config_yml:
-		service = re.search("([A-Z0-9_-]+)_enable", str(c))  // if variable follows regex it's considered a service and will be printed
-		if service is not None:
-		print(service.group(1))*/
+		fmt.Println("**********************************************************************************************")
+		fmt.Printf("* The following services are available in [ %v : %v ]  * \n", Stack, Version)
+		fmt.Println("**********************************************************************************************")
+
+		for k, _ := range ymlConfig {
+			services := serviceRegex.FindStringSubmatch(fmt.Sprintf("%v", k))
+			if len(services) > 0 {
+				fmt.Println(services[1])
+			}
+		}
+
 	},
 }
-
-

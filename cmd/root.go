@@ -19,6 +19,8 @@ import (
 var Stack string
 var Version string
 
+const containerName = "platys"
+
 var rootCmd = &cobra.Command{
 	Use:   "platys",
 	Short: "Platys platform generator",
@@ -46,22 +48,7 @@ func Execute() {
 	}
 }
 
-func pullConfig(){
-	// init and start docker container
-	/*client = Docker.from_env()
-	dp_container = client.containers.run(image = fmt.Sprintf("%s:%s", Stack, ), detach = True, auto_remove = True)
-
-	// copy default config file (with default values to the current folder
-	tar_config = tempfile.gettempdir() + '/config.tar'
-	f = open(tar_config, 'wb')
-	bits, stats = dp_container.get_archive('/opt/mdps-gen/vars/config.yml')
-
-	for chunk in bits:
-	f.write(chunk)
-	f.close()*/
-
-	//return tar_config
-
+func pullConfig() string {
 
 	ctx := context.Background()
 
@@ -78,10 +65,9 @@ func pullConfig(){
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: Stack,
-
 		Tty:   true,
+	}, nil, nil, containerName)
 
-	}, nil, nil, "platys")
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +75,6 @@ func pullConfig(){
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
-
 
 	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
 	select {
@@ -105,16 +90,16 @@ func pullConfig(){
 		panic(err)
 	}
 
-
-	reader, _, err = cli.CopyFromContainer(ctx, resp.ID,"/opt/mdps-gen/vars/config.yml")
-	if err != nil{
+	reader, _, err = cli.CopyFromContainer(ctx, resp.ID, "/opt/mdps-gen/vars/config.yml")
+	if err != nil {
 		log.Println(err.Error())
 	}
 	tr := tar.NewReader(reader)
 
+	var config_file = ""
 	for {
 		// hdr gives you the header of the tar file
-		hdr, err := tr.Next()
+		_, err := tr.Next()
 		if err == io.EOF {
 			// end of tar archive
 			break
@@ -126,18 +111,26 @@ func pullConfig(){
 		buf.ReadFrom(tr)
 
 		// You can use this wholeContent to create new file
-		wholeContent := buf.String()
+		config_file = buf.String()
 
-		fmt.Println("Whole of the string of ", hdr.Name ," is ",wholeContent)
+
 
 	}
 
 	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
-	cli.ContainerRemove(ctx, resp.ID,types.ContainerRemoveOptions{
-		RemoveVolumes: true,
-		RemoveLinks:   true,
-		Force:         true,
+
+	err = cli.ContainerStop(context.Background(), resp.ID, nil)
+	if err != nil {
+		panic(err)
+	}
+	err = cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{
+		RemoveVolumes: false,
+		RemoveLinks:   false,
+		Force:         false,
 	})
+	if err != nil {
+		panic(err)
+	}
+
+	return config_file
 }
-
-
