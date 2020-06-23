@@ -41,7 +41,7 @@ The **platys** toolset runs on Windows, macOS and 64-bit Linux.
 
 `platys` runs the generator (supporting given Platform Stack) as a Docker container in the background. Therefore you need to have [Docker](https://www.docker.com/get-started) installed on the machine where you create the Platform. To run the Platform, you also need to have [Docker Compose](https://docs.docker.com/compose/) installed on the target machine, which can be different to the one where you generate the platform.  
 
-See [Installing platys](./documentation/install.md) for how to install `platys` and then the [Getting Started with Platys and the Modern Data Platform Stack](./platform-stacks/modern-data-platform/documentation/getting-started.md) for how to use `platys`.
+See [Installing platys](./documentation/install.md) for how to install `platys` and then the [Getting Started with Platys and the Modern Data Platform Stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md) for how to use `platys`.
 
 ## Where can I run a generated platform ?
 
