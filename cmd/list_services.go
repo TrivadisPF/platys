@@ -11,6 +11,7 @@ var serviceRegex = regexp.MustCompile(`(?P<service>[A-Z0-9_-]+)_enable`)
 
 func init() {
 	rootCmd.AddCommand(listServicesCmd)
+
 }
 
 var listServicesCmd = &cobra.Command{
@@ -21,6 +22,7 @@ var listServicesCmd = &cobra.Command{
 
 		var ymlConfig map[interface{}]interface{}
 		err := yaml.Unmarshal([]byte(pullConfig()), &ymlConfig)
+
 		if err != nil {
 			panic(err)
 		}

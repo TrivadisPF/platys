@@ -20,6 +20,7 @@ var Stack string
 var Version string
 
 const containerName = "platys"
+const configFilePath = "/opt/mdps-gen/vars/config.yml"
 
 var rootCmd = &cobra.Command{
 	Use:   "platys",
@@ -90,7 +91,7 @@ func pullConfig() string {
 		panic(err)
 	}
 
-	reader, _, err = cli.CopyFromContainer(ctx, resp.ID, "/opt/mdps-gen/vars/config.yml")
+	reader, _, err = cli.CopyFromContainer(ctx, resp.ID, configFilePath)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -98,10 +99,8 @@ func pullConfig() string {
 
 	var config_file = ""
 	for {
-		// hdr gives you the header of the tar file
 		_, err := tr.Next()
-		if err == io.EOF {
-			// end of tar archive
+		if err == io.EOF { // end of tar archive
 			break
 		}
 		if err != nil {
@@ -110,20 +109,69 @@ func pullConfig() string {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(tr)
 
-		// You can use this wholeContent to create new file
 		config_file = buf.String()
-
-
-
 	}
 
 	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+	stopRemoveContainer(resp.ID, cli, ctx)
 
-	err = cli.ContainerStop(context.Background(), resp.ID, nil)
+	return config_file
+}
+
+func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
+	ctx := context.Background()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
-	err = cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{
+
+	reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
+	if err != nil {
+		panic(err)
+	}
+	io.Copy(os.Stdout, reader)
+
+	resp, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: Stack,
+		Tty:   true,
+	}, nil, nil, containerName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		panic(err)
+	}
+
+	statusCh, errCh := cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			panic(err)
+		}
+	case <-statusCh:
+	}
+
+	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	if err != nil {
+		panic(err)
+	}
+
+	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+	defer stopRemoveContainer(resp.ID, cli, ctx) //defer the stop container after copying the file
+
+	return cli.CopyFromContainer(ctx, resp.ID, filePath)
+}
+
+func stopRemoveContainer(id string, cli *client.Client, ctx context.Context) {
+
+	err := cli.ContainerStop(context.Background(), id, nil)
+	if err != nil {
+		panic(err)
+	}
+	err = cli.ContainerRemove(ctx, id, types.ContainerRemoveOptions{
 		RemoveVolumes: false,
 		RemoveLinks:   false,
 		Force:         false,
@@ -131,6 +179,4 @@ func pullConfig() string {
 	if err != nil {
 		panic(err)
 	}
-
-	return config_file
 }

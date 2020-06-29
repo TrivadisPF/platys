@@ -262,7 +262,7 @@ def list_services(stack_name, stack_version):
 @cli.command()
 @click.option('-f', '--folder', 'base_folder',  help='the path base folder that will be used to clean: container-volume will be appended to the path', required=True)
 @click.option('-sn', '--stack-name', 'stack_name', default='trivadis/platys-modern-data-platform', type=click.STRING, show_default=True, help='the platform stack image')
-@click.option('-sv', '--stack-version', 'stack_version', default='latest', type=click.STRING, show_default=True, help='the platform stack image version to use')
+@click.option('-sv', '--stack-version', 'stacdk_version', default='latest', type=click.STRING, show_default=True, help='the platform stack image version to use')
 def clean(base_folder, stack_name, stack_version):
 
     folder = base_folder+"/container-volume"
