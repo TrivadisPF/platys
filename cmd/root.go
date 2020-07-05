@@ -9,15 +9,15 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"log"
-
 	"github.com/spf13/cobra"
 	"io"
+	"log"
 	"os"
 )
 
 var Stack string
 var Version string
+var Verbose bool
 
 const containerName = "platys"
 const configFilePath = "/opt/mdps-gen/vars/config.yml"
@@ -35,6 +35,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
 	rootCmd.PersistentFlags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", true, "verbose output")
 }
 
 func er(msg interface{}) {
@@ -51,18 +52,7 @@ func Execute() {
 
 func pullConfig() string {
 
-	ctx := context.Background()
-
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		panic(err)
-	}
-
-	reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
-	if err != nil {
-		panic(err)
-	}
-	io.Copy(os.Stdout, reader)
+	cli, ctx := initClient()
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: Stack,
@@ -91,7 +81,7 @@ func pullConfig() string {
 		panic(err)
 	}
 
-	reader, _, err = cli.CopyFromContainer(ctx, resp.ID, configFilePath)
+	reader, _, err := cli.CopyFromContainer(ctx, resp.ID, configFilePath)
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -119,18 +109,8 @@ func pullConfig() string {
 }
 
 func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
-	ctx := context.Background()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		panic(err)
-	}
-
-	reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
-	if err != nil {
-		panic(err)
-	}
-	io.Copy(os.Stdout, reader)
+	cli, ctx := initClient()
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: Stack,
@@ -179,4 +159,21 @@ func stopRemoveContainer(id string, cli *client.Client, ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func initClient() (*client.Client, context.Context) {
+	ctx := context.Background()
+
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		panic(err)
+	}
+
+	reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
+	if err != nil {
+		panic(err)
+	}
+	io.Copy(os.Stdout, reader)
+
+	return cli, ctx
 }
