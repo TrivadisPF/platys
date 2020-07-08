@@ -21,21 +21,13 @@ type YAMLFile struct {
 	Platys Platys `yaml:"platys"`
 }
 type Platys struct {
-	PlatformName      string `yaml:"platformName"`
+	PlatformName      string `yaml:"platform-name"`
 	StackImageName    string `yaml:"stack-image-name"`
 	StackImageVersion string `yaml:"stack-image-version"`
 	Structure         string `yaml:"structure"`
 }
 
 type Service map[string]string
-
-func (i Service) name() string {
-	return i["name"]
-}
-
-func (i Service) group() string {
-	return i["group"]
-}
 
 func init() {
 	rootCmd.AddCommand(genCmd)
@@ -44,24 +36,6 @@ func init() {
 	genCmd.Flags().StringVarP(&configUrl, "config-url", "u", "", "The URL to a remote config file")
 	genCmd.Flags().StringVarP(&configFile, "config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
 	genCmd.MarkFlagRequired("base-folder")
-}
-func check_node_limits() {
-	/*node_limits: Dict[str, int] = {
-	  "ZOOKEEPER_nodes": 3,
-	  "KAFKA_broker_nodes": 6,
-	  "KAFKA_SCHEMA_REGISTRY_nodes": 2,
-	  "KAFKA_CONNECT_nodes": 3,
-	  "KAFKA_KSQLDB_nodes": 3,
-	  "HADOOP_datanodes": 6,
-	  "DATASTAX_nodes": 3,
-	  "MOSQUITTO_nodes": 3
-	  }
-
-	  for k, v in node_limits.items():
-	  if config_yml.get(k):
-	  print(f'[{k}] -> [{config_yml.get(k)}] v: [{v}]')
-	  if config_yml.get(k) > v:
-	  raise Exception(f'Unable to generate config file since because the number of nodes configured for service [{k}] -> [{config_yml.get(k)}] is higher than max value [{v}]')*/
 }
 
 var genCmd = &cobra.Command{
@@ -126,9 +100,9 @@ var genCmd = &cobra.Command{
 		}
 
 		if delEmptyLines {
-			env = append(env, "del_empty_lines=1")
+			env = append(env, "DEL_EMPTY_LINES=1")
 		} else {
-			env = append(env, "del_empty_lines=0")
+			env = append(env, "DEL_EMPTY_LINES=0")
 		}
 
 		if configUrl != "" {
@@ -204,13 +178,14 @@ func checkNodeLimits(services map[interface{}]interface{}) {
 	}
 
 	for k, v := range nodeLimits {
-		nodes := services[k].(int)
-		if nodes > v {
-			panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than max value [%v])", k, nodes, v))
+		nodes, found := services[k]
+		if found {
+			if nodes.(int) > v {
+				panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than max value [%v])", k, nodes, v))
 
+			}
 		}
-	}
 
-	fmt.Println(nodeLimits)
+	}
 
 }
