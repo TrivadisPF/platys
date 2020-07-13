@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/markbates/pkger"
 	"github.com/spf13/cobra"
 	"io"
 	"log"
@@ -176,4 +177,27 @@ func initClient() (*client.Client, context.Context) {
 	io.Copy(os.Stdout, reader)
 
 	return cli, ctx
+}
+
+func printBanner() {
+	//content, _ := ioutil.ReadFile("init_banner.txt")
+	//fmt.Print(string(content))
+
+	f, err := pkger.Open("/assets/init_banner.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	info, err := f.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	file := make([]byte, info.Size())
+	_, err = f.Read(file)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(file))
 }

@@ -122,5 +122,7 @@ var initCmd = &cobra.Command{
 			return
 		}
 
+		printBanner()
+
 	},
 }
