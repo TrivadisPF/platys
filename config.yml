@@ -1,0 +1,10 @@
+      platys:
+        platform-name: 'default'
+        stack-image-name: 'trivadis/platys-modern-data-platform'
+        stack-image-version: '1.5.2'
+        structure: 'subfolder'
+
+      PYTHON_enable: true
+      KAFKA_enable: true
+      private_docker_repository_name: trivadis
+      use_timezone: 
