@@ -1,5 +1,5 @@
 on: release
-name: Build and release
+name: Build and release platys
 jobs:
   build:
     name: Build Go
