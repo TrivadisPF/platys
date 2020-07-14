@@ -22,4 +22,3 @@ jobs:
             package: ''
             name: 'platys'
             compress: 'true'
-            dest: 'dest'
