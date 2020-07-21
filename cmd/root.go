@@ -180,8 +180,7 @@ func initClient() (*client.Client, context.Context) {
 }
 
 func printBanner() {
-	//content, _ := ioutil.ReadFile("init_banner.txt")
-	//fmt.Print(string(content))
+
 
 	f, err := pkger.Open("/assets/init_banner.txt")
 	if err != nil {
