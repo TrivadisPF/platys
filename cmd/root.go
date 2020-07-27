@@ -22,12 +22,18 @@ var Verbose bool
 
 const containerName = "platys"
 const configFilePath = "/opt/mdps-gen/vars/config.yml"
+const version = "2.3.0"
+
+var versionInfo = fmt.Sprintf(
+	`Platys - Trivadis Platform in a Box - v %v
+https://github.com/trivadispf/platys
+Copyright (c) 2018-2020, Trivadis AG`,
+	version)
 
 var rootCmd = &cobra.Command{
 	Use:   "platys",
 	Short: "Platys platform generator",
-	Long: `Platys modern data platform generator
-                Complete documentation is available at https://github.com/TrivadisPF/platys`,
+	Long:  versionInfo,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 { // no argument provided invoke help command
 			cmd.Help()
@@ -40,6 +46,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
 	rootCmd.PersistentFlags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", true, "verbose output")
+
 }
 
 func Execute() {
