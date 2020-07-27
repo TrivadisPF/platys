@@ -19,20 +19,20 @@ var (
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	initCmd.Flags().StringP("config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
-	initCmd.Flags().StringVarP(&enableServices, "--enable-services", "y", "", "List of services to enable in the config file")
-	initCmd.Flags().StringVarP(&seedConfig, "--seed-config", "e", "", "the name of a predefined stack to base this new platform on")
+	initCmd.Flags().StringVarP(&enableServices, "--enable-services", "y", "", "comma separated list of services to enable in the config file")
 	initCmd.Flags().BoolVarP(&force, "--force", "f", false, "If specified, this command will overwrite any existing config file")
-	initCmd.Flags().StringVarP(&hwArch, "--hw-arch", "x", "x86-64", "Hardware architecture for the platform")
+	initCmd.Flags().StringVarP(&hwArch, "--hw-arch", "x", "x86-64", " Hardware architecture for the platform")
+	initCmd.Flags().StringVarP(&seedConfig, "--seed-config", "e", "", "the name of a predefined stack to base this new platform on")
+	initCmd.Flags().StringP("config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
 
 }
 
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial config file, if one does not already exists",
-	Long: `Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial
-		config file, if one does not already exists The stack to use as well as its version need to be passed by the --stack-image-name and --stack-image-version options.
-			By default 'config.yml' is used for the name of the config file, which is created by the init`,
+	Long: `Initializes the current directory to be the root for a platys platform by creating an initial
+config file, if one does not already exists The stack to use as well as its version need to be passed by the --stack and --stack-version options.
+By default 'config.yml' is used for the name of the config file, which is created by the init`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var configFile, err = cmd.Flags().GetString("config-file")
