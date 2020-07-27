@@ -94,9 +94,9 @@ var genCmd = &cobra.Command{
 		var env []string
 
 		if Verbose {
-			env = append(env, "Verbose=1")
+			env = append(env, "VERBOSE=1")
 		} else {
-			env = append(env, "Verbose=0")
+			env = append(env, "VERBOSE=0")
 		}
 
 		if delEmptyLines {
