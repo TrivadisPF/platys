@@ -29,7 +29,10 @@ var rootCmd = &cobra.Command{
 	Long: `Platys modern data platform generator
                 Complete documentation is available at https://github.com/TrivadisPF/platys`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
+		if len(args) == 0 { // no argument provided invoke help command
+			cmd.Help()
+			os.Exit(0)
+		}
 	},
 }
 
@@ -39,11 +42,6 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", true, "verbose output")
 }
 
-func er(msg interface{}) {
-	fmt.Println("Error:", msg)
-	os.Exit(1)
-}
-
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -51,6 +49,7 @@ func Execute() {
 	}
 }
 
+// extracts the config.yml file from the docker image
 func pullConfig() string {
 
 	cli, ctx := initClient()
@@ -109,6 +108,8 @@ func pullConfig() string {
 	return config_file
 }
 
+// extracts the provided file/folder from the docker image
+// file/folders are returned as a tar file
 func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
 
 	cli, ctx := initClient()
@@ -146,6 +147,7 @@ func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
 	return cli.CopyFromContainer(ctx, resp.ID, filePath)
 }
 
+// stops and removes the provided container id
 func stopRemoveContainer(id string, cli *client.Client, ctx context.Context) {
 
 	err := cli.ContainerStop(context.Background(), id, nil)
@@ -162,6 +164,7 @@ func stopRemoveContainer(id string, cli *client.Client, ctx context.Context) {
 	}
 }
 
+// boilerplate code to init the docker cli
 func initClient() (*client.Client, context.Context) {
 	ctx := context.Background()
 
@@ -179,8 +182,8 @@ func initClient() (*client.Client, context.Context) {
 	return cli, ctx
 }
 
+// prints the help banner
 func printBanner() {
-
 
 	f, err := pkger.Open("/assets/init_banner.txt")
 	if err != nil {
