@@ -5,12 +5,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
-
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 )
 
 var delEmptyLines bool
@@ -18,7 +18,8 @@ var configUrl string
 var configFile string
 
 type YAMLFile struct {
-	Platys Platys `yaml:"platys"`
+	Platys   Platys `yaml:"platys"`
+	Services Services
 }
 type Platys struct {
 	PlatformName      string `yaml:"platform-name"`
@@ -27,7 +28,9 @@ type Platys struct {
 	Structure         string `yaml:"structure"`
 }
 
-type Service map[string]string
+type Services struct {
+	service yaml.Node `yaml:""`
+}
 
 func init() {
 	rootCmd.AddCommand(genCmd)
@@ -47,7 +50,7 @@ var genCmd = &cobra.Command{
     		referencing a file on the Internet (using the --config-url option).`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		var services map[interface{}]interface{}
+		var services yaml.Node
 		var platys YAMLFile
 
 		if configFile == "" {
@@ -65,7 +68,24 @@ var genCmd = &cobra.Command{
 			panic(err)
 		}
 
-		checkNodeLimits(services)
+		for i, n := range services.Content[0].Content {
+
+			if n.Kind == yaml.ScalarNode {
+				if max, found := checkNodeLimits(n.Value); found {
+					val, err := strconv.Atoi(services.Content[0].Content[i+1].Value)
+
+					if err != nil {
+						fmt.Println(fmt.Sprintf("Unable to parse value %v for key %v", val, services.Content[0].Content[i].Value))
+					}
+
+					if val > max {
+						panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than max value [%v])", val, services.Content[0].Content[i].Value, max))
+					}
+
+				}
+			}
+
+		}
 
 		if platys.Platys.PlatformName == "" || platys.Platys.StackImageName == "" || platys.Platys.StackImageVersion == "" || platys.Platys.Structure == "" {
 			log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
@@ -76,8 +96,6 @@ var genCmd = &cobra.Command{
 			log.Printf("using configuration file [%v] with values:  platform-name: [%v], stack-image-name: [%v]  stack-image-version: [%v], structure [%v]",
 				configFile, platys.Platys.PlatformName, platys.Platys.StackImageName, platys.Platys.StackImageVersion, platys.Platys.Structure)
 		}
-
-		//check_node_limits(config_yml) TODO: implement
 
 		var currentFolder, _ = os.Getwd()
 		var destination = currentFolder // where the gen command will output
@@ -160,12 +178,11 @@ var genCmd = &cobra.Command{
 		stopRemoveContainer(resp.ID, cli, ctx)
 
 	},
-
-	// Checks that the max amount of nodes for a given service is not higher than the max amount
-
 }
 
-func checkNodeLimits(services map[interface{}]interface{}) {
+// Checks that the max amount of nodes for a given service is not higher than the max amount
+func checkNodeLimits(nodeName string) (int, bool) {
+
 	nodeLimits := map[string]int{
 		"ZOOKEEPER_nodes":             3,
 		"KAFKA_broker_nodes":          6,
@@ -177,15 +194,8 @@ func checkNodeLimits(services map[interface{}]interface{}) {
 		"MOSQUITTO_nodes":             3,
 	}
 
-	for k, v := range nodeLimits {
-		nodes, found := services[k]
-		if found {
-			if nodes.(int) > v {
-				panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than max value [%v])", k, nodes, v))
+	val, found := nodeLimits[nodeName]
 
-			}
-		}
-
-	}
+	return val, found
 
 }

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"strings"
@@ -19,10 +19,10 @@ var (
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	initCmd.Flags().StringVarP(&enableServices, "--enable-services", "y", "", "comma separated list of services to enable in the config file")
-	initCmd.Flags().BoolVarP(&force, "--force", "f", false, "If specified, this command will overwrite any existing config file")
-	initCmd.Flags().StringVarP(&hwArch, "--hw-arch", "x", "x86-64", " Hardware architecture for the platform")
-	initCmd.Flags().StringVarP(&seedConfig, "--seed-config", "e", "", "the name of a predefined stack to base this new platform on")
+	initCmd.Flags().StringVarP(&enableServices, "enable-services", "y", "", "Comma separated list of services to enable in the config file")
+	initCmd.Flags().BoolVarP(&force, "force", "f", false, "If specified, this command will overwrite any existing config file")
+	initCmd.Flags().StringVarP(&hwArch, "hw-arch", "x", "x86-64", "Hardware architecture for the platform")
+	initCmd.Flags().StringVarP(&seedConfig, "seed-config", "e", "", "The name of a predefined stack to base this new platform on")
 	initCmd.Flags().StringP("config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
 
 }
@@ -55,7 +55,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 			panic(err)
 		}
 
-		if enableServices != "" {
+		if enableServices != "" { // services where passed as an argument
 
 			var in_array = func(val string, list []string) bool {
 				for _, b := range list {
@@ -66,11 +66,11 @@ By default 'config.yml' is used for the name of the config file, which is create
 				return false
 			}
 
-			services := strings.Split(enableServices, ",")
+			services := strings.Split(enableServices, ",") // separate service by coma
 
 			for s := range services {
 
-				service := services[s] + "_enable"
+				service := services[s] + "_enable" // if matched with an existing service enable it
 				_, found := ymlConfig[service]
 
 				if found {
