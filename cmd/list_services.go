@@ -7,6 +7,7 @@ import (
 	"regexp"
 )
 
+// is considered a service any key that matches the regex
 var serviceRegex = regexp.MustCompile(`(?P<service>[A-Z0-9_-]+)_enable`)
 
 func init() {

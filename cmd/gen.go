@@ -17,19 +17,25 @@ var delEmptyLines bool
 var configUrl string
 var configFile string
 
-type YAMLFile struct {
-	Platys   Platys `yaml:"platys"`
-	Services Services
+type LegacyYAMLFile struct {
+	Platys LegacyPlatys `yaml:"platys"`
 }
-type Platys struct {
+
+type YAMLFile struct {
+	Platys Platys `yaml:"platys"`
+}
+type LegacyPlatys struct {
 	PlatformName      string `yaml:"platform-name"`
 	StackImageName    string `yaml:"stack-image-name"`
 	StackImageVersion string `yaml:"stack-image-version"`
 	Structure         string `yaml:"structure"`
 }
 
-type Services struct {
-	service yaml.Node `yaml:""`
+type Platys struct {
+	PlatformName         string `yaml:"platform-name"`
+	PlatformStack        string `yaml:"platform-stack"`
+	PlatformStackVersion string `yaml:"platform-stack-version"`
+	Structure            string `yaml:"structure"`
 }
 
 func init() {
@@ -51,6 +57,7 @@ var genCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var services yaml.Node
+		var platysLegacy LegacyYAMLFile
 		var platys YAMLFile
 
 		if configFile == "" {
@@ -62,16 +69,19 @@ var genCmd = &cobra.Command{
 			panic(err)
 		}
 		err = yaml.Unmarshal(ymlContent, &platys)
+		err = yaml.Unmarshal(ymlContent, &platysLegacy)
 		err = yaml.Unmarshal(ymlContent, &services)
 
 		if err != nil {
 			panic(err)
 		}
 
+		isPlatysValid(platysLegacy, platys)
+
 		for i, n := range services.Content[0].Content {
 
 			if n.Kind == yaml.ScalarNode {
-				if max, found := checkNodeLimits(n.Value); found {
+				if max, found := isLimited(n.Value); found {
 					val, err := strconv.Atoi(services.Content[0].Content[i+1].Value)
 
 					if err != nil {
@@ -87,14 +97,9 @@ var genCmd = &cobra.Command{
 
 		}
 
-		if platys.Platys.PlatformName == "" || platys.Platys.StackImageName == "" || platys.Platys.StackImageVersion == "" || platys.Platys.Structure == "" {
-			log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
-			return
-		}
-
 		if Verbose {
-			log.Printf("using configuration file [%v] with values:  platform-name: [%v], stack-image-name: [%v]  stack-image-version: [%v], structure [%v]",
-				configFile, platys.Platys.PlatformName, platys.Platys.StackImageName, platys.Platys.StackImageVersion, platys.Platys.Structure)
+			log.Printf("using configuration file [%v] with values:  platform-name: [%v], platform-stack: [%v]  splatform-stack-version: [%v], structure [%v]",
+				configFile, platys.Platys.PlatformName, platys.Platys.PlatformStack, platys.Platys.PlatformStackVersion, platys.Platys.Structure)
 		}
 
 		var currentFolder, _ = os.Getwd()
@@ -181,7 +186,7 @@ var genCmd = &cobra.Command{
 }
 
 // Checks that the max amount of nodes for a given service is not higher than the max amount
-func checkNodeLimits(nodeName string) (int, bool) {
+func isLimited(nodeName string) (int, bool) {
 
 	nodeLimits := map[string]int{
 		"ZOOKEEPER_nodes":             3,
@@ -198,4 +203,16 @@ func checkNodeLimits(nodeName string) (int, bool) {
 
 	return val, found
 
+}
+
+func isPlatysValid(legacyPlatys LegacyYAMLFile, platys YAMLFile) {
+	if legacyPlatys.Platys.PlatformName == "" || legacyPlatys.Platys.StackImageName == "" || legacyPlatys.Platys.StackImageVersion == "" || legacyPlatys.Platys.Structure == "" {
+		log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
+		return
+	}
+
+	if legacyPlatys.Platys.PlatformName == "" || platys.Platys.PlatformStack == "" || platys.Platys.PlatformStackVersion == "" || platys.Platys.Structure == "" {
+		log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
+		return
+	}
 }

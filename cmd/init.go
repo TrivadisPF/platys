@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -45,84 +46,102 @@ By default 'config.yml' is used for the name of the config file, which is create
 
 		if err == nil && !force {
 			log.Fatal("config.yml already exists if you want to override it use the [-f] option")
-
 		}
 
-		var ymlConfig map[interface{}]interface{}
+		var ymlConfig yaml.Node
 		err = yaml.Unmarshal([]byte(pullConfig()), &ymlConfig)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		if enableServices != "" { // services where passed as an argument
 
-			var in_array = func(val string, list []string) bool {
-				for _, b := range list {
-					if b == val {
-						return true
-					}
-				}
-				return false
-			}
-
 			services := strings.Split(enableServices, ",") // separate service by coma
+			servicesYml := ymlConfig.Content[0].Content
+			updatedYml := make([]*yaml.Node, 0)
+			copied := 0
+			copyNext := false
 
-			for s := range services {
+			for _, n := range servicesYml {
 
-				service := services[s] + "_enable" // if matched with an existing service enable it
-				_, found := ymlConfig[service]
-
-				if found {
-					if Verbose {
-						fmt.Println("Enabling service : [%v]", service)
-					}
-					ymlConfig[service] = true
-				}
-			}
-
-			for k, _ := range ymlConfig {
-				if strings.Contains(k.(string), "platys") || strings.Contains(k.(string), "use_timezone") || strings.Contains(k.(string), "private_docker_repository_name") {
+				if copyNext {
+					n.Value = "true"
+					updatedYml = append(updatedYml, n)
+					copied++
+					copyNext = false
 					continue
 				}
-				if !in_array(strings.Replace(k.(string), "_enable", "", -1), services) {
-					delete(ymlConfig, k)
+
+				if strings.Contains(n.Value, "platys") { // copy the platys keys
+					updatedYml = append(updatedYml, n)
+					copied++
+					copyNext = true // mark it so as the mapping values are copied during next iteration
+					continue
 				}
 
+				if strings.Contains(n.Value, "use_timezone") || strings.Contains(n.Value, "private_docker_repository_name") {
+					updatedYml = append(updatedYml, n)
+					copied++
+					copyNext = true
+					continue
+				}
+
+				if !strings.Contains(n.Value, "_enable") {
+					continue
+				}
+
+				service := strings.Replace(n.Value, "_enable", "", 1)
+
+				if in_array(service, services) {
+
+					fmt.Println(fmt.Sprintf("Enabling service %v", service))
+					updatedYml = append(updatedYml, n)
+					copied++
+					copyNext = true
+
+				} else {
+					fmt.Println(fmt.Sprintf("removing service %v", service))
+
+				}
 			}
 
+			updatedYml = updatedYml[:copied]
+			ymlConfig.Content[0].Content = updatedYml
 		}
 
-		f, err := os.Create("config.yml")
+		b, _ := yaml.Marshal(&ymlConfig)
+		b = addRootIndent(b, 6)
+
+		file, err := os.OpenFile("config.yml", os.O_WRONLY, os.ModeAppend)
 
 		if err != nil {
-			fmt.Println(err)
-			f.Close()
-			log.Fatal("Unable to create config file")
+			log.Fatal(fmt.Sprintf("Unable to open file %v", err))
 		}
 
-		fmt.Println("file written successfully")
+		defer file.Close()
 
-		fmt.Fprintln(f, "      platys:")
-		for k, v := range ymlConfig[interface{}(string("platys"))].(map[interface{}]interface{}) {
-			fmt.Fprintln(f, fmt.Sprintf("        %v: '%v'", k.(string), v.(string)))
-		}
-
-		fmt.Fprintln(f, "")
-
-		for k, v := range ymlConfig {
-			if k == "platys" {
-				continue
+		for _, s := range strings.SplitN(string(b), "\n", -1) {
+			_, err = file.Write([]byte(s + "\n"))
+			if err != nil {
+				log.Fatal(err)
 			}
-			fmt.Fprintln(f, fmt.Sprintf("      %v: %v", k, v))
 		}
-		err = f.Close()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		printBanner()
 
 	},
+}
+
+func addRootIndent(b []byte, n int) []byte {
+	prefix := append([]byte("\n"), bytes.Repeat([]byte(" "), n)...)
+	b = append(prefix[1:], b...) // Indent first line
+	return bytes.ReplaceAll(b, []byte("\n"), prefix)
+}
+
+func in_array(val string, list []string) bool {
+	for _, b := range list {
+		if b == val {
+			return true
+		}
+	}
+	return false
 }
