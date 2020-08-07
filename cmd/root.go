@@ -204,8 +204,6 @@ func printBanner() {
 
 	file := make([]byte, info.Size())
 	_, err = f.Read(file)
-	if err != nil {
-		panic(err)
-	}
+
 	fmt.Println(string(file))
 }

@@ -126,7 +126,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 		b, _ := yaml.Marshal(&ymlConfig)
 		b = addRootIndent(b, 6)
 
-		file, err := os.OpenFile("config.yml", os.O_WRONLY, os.ModeAppend)
+		file, err := os.OpenFile("config.yml", os.O_WRONLY|os.O_CREATE, os.ModeAppend)
 
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to open file %v", err))
@@ -140,6 +140,8 @@ By default 'config.yml' is used for the name of the config file, which is create
 				log.Fatal(err)
 			}
 		}
+
+		printBanner()
 
 	},
 }

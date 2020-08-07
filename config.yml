@@ -2,17 +2,19 @@
       # this file can be used as a template for a custom configuration
       # or to know about the different variables available for the generator
       platys:
-          platform-name: 'test'
+          platform-name: 'default'
           stack-image-name: 'trivadis/platys-modern-data-platform'
           stack-image-version: '1.6.0'
-          structure: 'subfolder'
+          structure: 'flat'
       # ===== Global configuation, valid for all or a group of services ========
       # Timezone, use a Linux string such as Europe/Zurich or America/New_York
-      use_timezone: ''
+      use_timezone: 'true'
       # the name of the repository to use for private images, which are not on docker hub (currently only Oracle images)
-      private_docker_repository_name: 'trivadis'
-      # ===== Apache Zookeeper ========
-      ZOOKEEPER_enable: false
+      private_docker_repository_name: 'true'
+      # ===== Apache Kafka ========
+      KAFKA_enable: true
+      
+lse
       ZOOKEEPER_volume_map_data: false
       ZOOKEEPER_nodes: 1 # either 1 or 3
       ZOOKEEPER_navigator_enable: false

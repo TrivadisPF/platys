@@ -68,7 +68,7 @@ var genCmd = &cobra.Command{
 		}
 		ymlContent, err := ioutil.ReadFile(configFile)
 		if err != nil {
-			panic(err)
+			log.Fatal(fmt.Sprintf("Unable to continue as %v cannot be found", configFile))
 		}
 		err = yaml.Unmarshal(ymlContent, &platys)
 		err = yaml.Unmarshal(ymlContent, &platysLegacy)
