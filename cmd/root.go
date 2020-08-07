@@ -43,8 +43,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
-	rootCmd.PersistentFlags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
+
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", true, "verbose output")
 
 }

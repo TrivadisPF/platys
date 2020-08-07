@@ -44,6 +44,8 @@ func init() {
 	genCmd.Flags().BoolVarP(&delEmptyLines, "del-empty-lines", "l", true, "Remove empty lines from the docker-compose.yml file.")
 	genCmd.Flags().StringVarP(&configUrl, "config-url", "u", "", "The URL to a remote config file")
 	genCmd.Flags().StringVarP(&configFile, "config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
+	genCmd.Flags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
+	genCmd.Flags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 	genCmd.MarkFlagRequired("base-folder")
 }
 

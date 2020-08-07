@@ -29,7 +29,8 @@ func init() {
 	initCmd.Flags().StringP("config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
 	initCmd.Flags().StringVarP(&structure, "structure", "b", "", "defines the structure of the generated platform (flat = platform is generate on the level of the config.yml or subfolder = platform is generated into a subfolder)")
 	initCmd.Flags().StringVarP(&platformName, "platform-name", "n", "", "the name of the platform to generate.")
-
+	initCmd.Flags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
+	initCmd.Flags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 }
 
 var initCmd = &cobra.Command{
