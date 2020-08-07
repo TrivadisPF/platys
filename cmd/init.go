@@ -15,6 +15,8 @@ var (
 	enableServices string
 	force          bool
 	hwArch         string
+	structure      string
+	platformName   string
 )
 
 func init() {
@@ -25,6 +27,8 @@ func init() {
 	initCmd.Flags().StringVarP(&hwArch, "hw-arch", "x", "x86-64", "Hardware architecture for the platform")
 	initCmd.Flags().StringVarP(&seedConfig, "seed-config", "e", "", "The name of a predefined stack to base this new platform on")
 	initCmd.Flags().StringP("config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
+	initCmd.Flags().StringVarP(&structure, "structure", "b", "", "defines the structure of the generated platform (flat = platform is generate on the level of the config.yml or subfolder = platform is generated into a subfolder)")
+	initCmd.Flags().StringVarP(&platformName, "platform-name", "n", "", "the name of the platform to generate.")
 
 }
 
@@ -110,6 +114,14 @@ By default 'config.yml' is used for the name of the config file, which is create
 			ymlConfig.Content[0].Content = updatedYml
 		}
 
+		if len(platformName) > 0 {
+			updateConfig("platform-name", platformName, &ymlConfig)
+		}
+
+		if len(structure) > 0 {
+			updateConfig("structure", structure, &ymlConfig)
+		}
+
 		b, _ := yaml.Marshal(&ymlConfig)
 		b = addRootIndent(b, 6)
 
@@ -144,4 +156,26 @@ func in_array(val string, list []string) bool {
 		}
 	}
 	return false
+}
+
+//TODO: check for possible a cleaner more concise way
+// to implement the following methods
+
+func updateConfig(name string, value string, node *yaml.Node) {
+
+	platys := node.Content[0].Content
+
+	for i, n := range platys {
+
+		if n.Value == "platys" {
+			for j, sn := range platys[i+1].Content {
+				if sn.Value == name {
+					platys[i+1].Content[j+1].Value = value
+					break
+				}
+
+			}
+		}
+	}
+
 }
