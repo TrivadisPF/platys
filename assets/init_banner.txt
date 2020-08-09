@@ -9,7 +9,7 @@
  / /  / / /_/ / /_/ /  __/ /  / / / /  / /_/ / /_/ / /_/ /_/ /  / ____/ / /_/ / /_/ __/ /_/ / /  / / / / / /
 /_/  /_/\____/\__,_/\___/_/  /_/ /_/  /_____/\__,_/\__/\__,_/  /_/   /_/\__,_/\__/_/  \____/_/  /_/ /_/ /_/
 
-Congratulations! Your new Platform has been initialized in %%path%%
+Congratulations! Your new Platform has been initialized in %v
 
 Just a few more steps and you're ready to go:
 

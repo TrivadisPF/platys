@@ -12,6 +12,8 @@ var serviceRegex = regexp.MustCompile(`(?P<service>[A-Z0-9_-]+)_enable`)
 
 func init() {
 	rootCmd.AddCommand(listServicesCmd)
+	listServicesCmd.Flags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
+	listServicesCmd.Flags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 
 }
 

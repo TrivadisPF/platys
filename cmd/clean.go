@@ -54,16 +54,11 @@ var cleanCmd = &cobra.Command{
 
 			switch {
 
-			// if no more files are found return
-			case err == io.EOF:
+			case err == io.EOF: // if no more files are found return
 				return
-
-			// return any other error
-			case err != nil:
+			case err != nil: // return any other error
 				panic(err)
-
-			// if the header is nil, just skip it (not sure how this happens)
-			case header == nil:
+			case header == nil: // if the header is nil, just skip it (not sure how this happens)
 				continue
 			}
 

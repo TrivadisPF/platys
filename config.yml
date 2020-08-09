@@ -14,7 +14,7 @@
       # ===== Apache Kafka ========
       KAFKA_enable: true
       
-lse
+se
       ZOOKEEPER_volume_map_data: false
       ZOOKEEPER_nodes: 1 # either 1 or 3
       ZOOKEEPER_navigator_enable: false
@@ -249,3 +249,4 @@ lse
       PYTHON_script_folder: ''
       PYTHON_script: ''
       
+ 

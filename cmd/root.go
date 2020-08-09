@@ -61,7 +61,7 @@ func pullConfig() string {
 	cli, ctx := initClient()
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image: Stack,
+		Image: Stack + ":" + Version,
 		Tty:   true,
 	}, nil, nil, containerName)
 
@@ -179,7 +179,7 @@ func initClient() (*client.Client, context.Context) {
 		panic(err)
 	}
 
-	reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
+	reader, err := cli.ImagePull(ctx, Stack+":"+Version, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -189,7 +189,7 @@ func initClient() (*client.Client, context.Context) {
 }
 
 // prints the help banner
-func printBanner() {
+func printBanner(path string) {
 
 	f, err := pkger.Open("/assets/init_banner.txt")
 	if err != nil {
@@ -205,5 +205,14 @@ func printBanner() {
 	file := make([]byte, info.Size())
 	_, err = f.Read(file)
 
-	fmt.Println(string(file))
+	fmt.Println(fmt.Sprintf(string(file), path))
+}
+
+func in_array(val string, list []string) bool {
+	for _, b := range list {
+		if b == val {
+			return true
+		}
+	}
+	return false
 }

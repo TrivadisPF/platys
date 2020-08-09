@@ -16,19 +16,10 @@ import (
 var delEmptyLines bool
 var configUrl string
 var configFile string
-
-type LegacyYAMLFile struct {
-	Platys LegacyPlatys `yaml:"platys"`
-}
+var legacyParams = []string{"stack-image-name", "stack-image-version"}
 
 type YAMLFile struct {
 	Platys Platys `yaml:"platys"`
-}
-type LegacyPlatys struct {
-	PlatformName      string `yaml:"platform-name"`
-	StackImageName    string `yaml:"stack-image-name"`
-	StackImageVersion string `yaml:"stack-image-version"`
-	Structure         string `yaml:"structure"`
 }
 
 type Platys struct {
@@ -44,8 +35,6 @@ func init() {
 	genCmd.Flags().BoolVarP(&delEmptyLines, "del-empty-lines", "l", true, "Remove empty lines from the docker-compose.yml file.")
 	genCmd.Flags().StringVarP(&configUrl, "config-url", "u", "", "The URL to a remote config file")
 	genCmd.Flags().StringVarP(&configFile, "config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
-	genCmd.Flags().StringVarP(&Stack, "stack", "s", "trivadis/platys-modern-data-platform", "stack version to employ")
-	genCmd.Flags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 	genCmd.MarkFlagRequired("base-folder")
 }
 
@@ -59,26 +48,31 @@ var genCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var services yaml.Node
-		var platysLegacy LegacyYAMLFile
+
 		var platys YAMLFile
 
 		if configFile == "" {
 			log.Fatal("Unable to run command as configFile is null")
-			return
 		}
+
 		ymlContent, err := ioutil.ReadFile(configFile)
+
 		if err != nil {
-			log.Fatal(fmt.Sprintf("Unable to continue as %v cannot be found", configFile))
+			log.Fatal(fmt.Sprintf("Unable to continue as the file [%v] cannot be found", configFile))
 		}
+
 		err = yaml.Unmarshal(ymlContent, &platys)
-		err = yaml.Unmarshal(ymlContent, &platysLegacy)
 		err = yaml.Unmarshal(ymlContent, &services)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
-		isPlatysValid(platysLegacy, platys)
+		isPlatysValid(platys, services)
+
+		// set global values for stack and version
+		Stack = platys.Platys.PlatformStack
+		Version = platys.Platys.PlatformStackVersion
 
 		for i, n := range services.Content[0].Content {
 
@@ -99,10 +93,7 @@ var genCmd = &cobra.Command{
 
 		}
 
-		if Verbose {
-			log.Printf("using configuration file [%v] with values:  platform-name: [%v], platform-stack: [%v]  splatform-stack-version: [%v], structure [%v]",
-				configFile, platys.Platys.PlatformName, platys.Platys.PlatformStack, platys.Platys.PlatformStackVersion, platys.Platys.Structure)
-		}
+		printInfoIfNecessary(platys)
 
 		var currentFolder, _ = os.Getwd()
 		var destination = currentFolder // where the gen command will output
@@ -137,7 +128,7 @@ var genCmd = &cobra.Command{
 		cli, ctx := initClient()
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: Stack,
+			Image: platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
 			Tty:   true,
 			Env:   env,
 		},
@@ -207,14 +198,48 @@ func isLimited(nodeName string) (int, bool) {
 
 }
 
-func isPlatysValid(legacyPlatys LegacyYAMLFile, platys YAMLFile) {
-	if legacyPlatys.Platys.PlatformName == "" || legacyPlatys.Platys.StackImageName == "" || legacyPlatys.Platys.StackImageVersion == "" || legacyPlatys.Platys.Structure == "" {
-		log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
-		return
+func isPlatysValid(platys YAMLFile, ymlConfig yaml.Node) {
+
+	if platys.Platys.PlatformName == "" || platys.Platys.PlatformStack == "" ||
+		platys.Platys.PlatformStackVersion == "" || platys.Platys.Structure == "" {
+
+		if isOlderVersion(ymlConfig) {
+			log.Fatal(
+				`The config file is not properly key names [stack-image-name] , [stack-image-version] are legacy parameters and should be manually renamed
+					[stack-image-name --> platform-stack] , [stack-image-version -->platform-stack-version ]`)
+
+		} else {
+			log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name|platform-stack] and [stack-image-version|platform-stack-version] are properly configured")
+		}
+
 	}
 
-	if legacyPlatys.Platys.PlatformName == "" || platys.Platys.PlatformStack == "" || platys.Platys.PlatformStackVersion == "" || platys.Platys.Structure == "" {
-		log.Fatal("The config file is not properly formatted or missing information please ensure [platform-name], [stack-image-name] and [stack-image-version] are properly configured")
-		return
+}
+
+func printInfoIfNecessary(platys YAMLFile) {
+	if Verbose {
+
+		log.Printf("using configuration file [%v] with values:  platform-name: [%v], platform-stack: [%v] platform-stack-version: [%v], structure [%v]",
+			configFile, platys.Platys.PlatformName, platys.Platys.PlatformStack, platys.Platys.PlatformStackVersion, platys.Platys.Structure)
 	}
+
+}
+
+func isOlderVersion(rootNode yaml.Node) bool {
+
+	platys := rootNode.Content[0].Content
+
+	for i, n := range platys {
+
+		if n.Value == "platys" {
+			for _, sn := range platys[i+1].Content {
+				if in_array(sn.Value, legacyParams) {
+					return true
+				}
+
+			}
+		}
+	}
+
+	return false
 }

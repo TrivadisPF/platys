@@ -126,7 +126,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 		b, _ := yaml.Marshal(&ymlConfig)
 		b = addRootIndent(b, 6)
 
-		file, err := os.OpenFile("config.yml", os.O_WRONLY|os.O_CREATE, os.ModeAppend)
+		file, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE, 0755)
 
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to open file %v", err))
@@ -134,14 +134,14 @@ By default 'config.yml' is used for the name of the config file, which is create
 
 		defer file.Close()
 
-		for _, s := range strings.SplitN(string(b), "\n", -1) {
+		for _, s := range strings.SplitN(string(b), "\n", -1) { // write updated config file
 			_, err = file.Write([]byte(s + "\n"))
 			if err != nil {
 				log.Fatal(err)
 			}
 		}
 
-		printBanner()
+		printBanner(configFile)
 
 	},
 }
@@ -152,21 +152,12 @@ func addRootIndent(b []byte, n int) []byte {
 	return bytes.ReplaceAll(b, []byte("\n"), prefix)
 }
 
-func in_array(val string, list []string) bool {
-	for _, b := range list {
-		if b == val {
-			return true
-		}
-	}
-	return false
-}
-
 //TODO: check for possible a cleaner more concise way
 // to implement the following methods
 
-func updateConfig(name string, value string, node *yaml.Node) {
+func updateConfig(name string, value string, rootNode *yaml.Node) {
 
-	platys := node.Content[0].Content
+	platys := rootNode.Content[0].Content
 
 	for i, n := range platys {
 
