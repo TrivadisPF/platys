@@ -10,7 +10,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+dest/
 downloads/
 eggs/
 .eggs/
@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 vagrant/.vagrant/**
+/platys
