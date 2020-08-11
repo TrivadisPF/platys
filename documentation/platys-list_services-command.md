@@ -1,17 +1,17 @@
 # platys list_services
 
 ```
-Usage: platys list_services [OPTIONS]
+List the services contained in the given version of the platys tool
 
-  Shows the services interfaces of the stack, web and/or apis
+Usage:
+  platys list_services [flags]
 
-Options:
-  -sn, --stack-name TEXT     the platform stack image  [default:
-                             trivadis/platys-modern-data-platform]
+Flags:
+  -h, --help                   help for list_services
+  -s, --stack string           stack version to employ (default "trivadis/platys-modern-data-platform")
+  -w, --stack-version string   version of the stack to employ (default "latest")
 
-  -sv, --stack-version TEXT  the platform stack image version to use
-                             [default: latest]
-
-  -h, --help                 Show this message and exit.
+Global Flags:
+  -v, --verbose   verbose output (default true)
 ```
 

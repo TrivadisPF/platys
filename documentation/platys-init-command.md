@@ -1,48 +1,26 @@
 # platys init
 
 ```
-Usage: platys init [OPTIONS]
+Initializes the current directory to be the root for a platys platform by creating an initial
+config file, if one does not already exists The stack to use as well as its version need to be passed by the --stack and --stack-version options.
+By default 'config.yml' is used for the name of the config file, which is created by the init
 
-  Initializes the current directory to be the root for the Modern
-  (Data) Platform by creating an initial config file, if one does not
-  already exists.
+Usage:
+  platys init [flags]
 
-  The stack to use as well as its version need to be passed by the
-  --stack-image-name and --stack-image-version options. By default
-  'config.yml' is used for the name of the config file, which is
-  created by the init.
+Flags:
+  -c, --config-file string       The name of the local config file (defaults to config.yml) (default "config.yml")
+  -y, --enable-services string   Comma separated list of services to enable in the config file
+  -f, --force                    If specified, this command will overwrite any existing config file
+  -h, --help                     help for init
+  -x, --hw-arch string           Hardware architecture for the platform (default "x86-64")
+  -n, --platform-name string     the name of the platform to generate.
+  -e, --seed-config string       The name of a predefined stack to base this new platform on
+  -s, --stack string             stack version to employ (default "trivadis/platys-modern-data-platform")
+  -w, --stack-version string     version of the stack to employ (default "latest")
+  -b, --structure string         defines the structure of the generated platform (flat = platform is generate on the level of the config.yml or subfolder = platform is generated into a subfolder)
 
-Options:
-  -n, --platform-name TEXT        the name of the platform to generate.
-                                  [required]
-
-  -sn, --stack-name TEXT          the platform stack image  [default:
-                                  trivadis/platys-modern-data-platform]
-
-  -sv, --stack-version TEXT       the platform stack image version to use
-                                  [default: latest]
-
-  -cf, --config-filename TEXT     the name of the local config file.
-                                  [default: config.yml]
-
-  -sc, --seed-config TEXT         the name of a predefined stack to base
-                                  this new platform on
-
-  -f, --force                     If specified, this command will
-                                  overwrite any existing config file
-
-  -hw, --hw-arch [ARM|ARM64|x86-64]
-                                  Hardware architecture for the platform
-  -s, --enable-services TEXT      List of services to enable in the
-                                  config file
-
-  --structure [flat|subfolder]    defines the structure of the generated
-                                  platform - flat = platform is generate
-                                  on the level of the config.yml or -
-                                  subfolder = platform is generated into
-                                  a subfolder, named to the value of
-                                  --platform-name
-
-  -h, --help                      Show this message and exit.
+Global Flags:
+  -v, --verbose   verbose output (default true)
 ```
 

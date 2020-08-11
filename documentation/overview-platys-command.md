@@ -7,22 +7,28 @@ This page provides the usage information for the `platys` Command.
 You can also see this information by running `platys --help` from the command line.
 
 ```
-Usage: platys [OPTIONS] COMMAND [ARGS]...
+Platys - Trivadis Platform in a Box - v 2.3.0
+https://github.com/trivadispf/platys
+Copyright (c) 2018-2020, Trivadis AG
 
-Options:
-  --version   Show the version and exit.
-  -h, --help  Show this message and exit.
+Usage:
+  platys [flags]
+  platys [command]
 
-Commands:
-  clean
-  config         Sets configuration
-  gen            Generates all the needed artefacts for the docker-based...
-  init           Initialises the current directory to be the root for the...
-  list_services  Shows the services interfaces of the stack, web and/or apis
-  stacks         Lists the predefined stacks available for the init
-  start          Starts the stack, once it is generated.
-  stop           Stops the stack, once it is generated.
-  upload-stack   Uploads the stack to a remote machine
+Available Commands:
+  clean         Cleans the contents in the $PATH/container-volume folder
+  gen           Generates all the needed artifacts for the docker-based modern (data) platform
+  help          Help about any command
+  init          Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial config file, if one does not already exists
+  list_services List the services
+  stacks        Lists the predefined stacks available for the init command
+  version       Print the version number of platys
+
+Flags:
+  -h, --help      help for platys
+  -v, --verbose   verbose output (default true)
+
+Use "platys [command] --help" for more information about a command.
 ```
    
 You can use platys binary, `platys [OPTIONS] [COMMAND] [ARGS...]`, to generate and manage docker compose files. 

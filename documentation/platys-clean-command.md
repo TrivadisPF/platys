@@ -1,19 +1,16 @@
 # platys clean
 
 ```
-Usage: platys clean [OPTIONS]
+Cleans the contents in the $PATH/container-volume folder
 
-Options:
-  -f, --folder TEXT          the path base folder that will be used to clean:
-                             container-volume will be appended to the path
-                             [required]
+Usage:
+  platys clean [flags]
 
-  -sn, --stack-name TEXT     the platform stack image  [default:
-                             trivadis/platys-modern-data-platform]
+Flags:
+  -f, --base-folder string   the path base folder that will be used to clean: container-volume will be appended to the path
+  -h, --help                 help for clean
 
-  -sv, --stack-version TEXT  the platform stack image version to use
-                             [default: latest]
-
-  -h, --help                 Show this message and exit.
+Global Flags:
+  -v, --verbose   verbose output (default true)
 
 ```
