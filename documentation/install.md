@@ -22,13 +22,17 @@ Follow the instructions below for installing `platys` on a Mac systems.
 1. Run this command to download the current stable release of the platys Stack Generator:
 
   ```
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.2.0/platys.bin" -o /usr/local/bin/platys
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
-2. Apply executable permissions to the binary:
+2. Untar and move it to `/usr/local/bin`
 
   ```
-sudo chmod +x /usr/local/bin/platys 
+cd /tmp
+tar zvxf /tmp/platys.tar.gz 
+sudo mv platys /usr/local/lib/
+sudo chown -R root:root /usr/local/bin/platys
+sudo rm /tmp/platys.tar.gz 
 ```
 
 3. Use the `--version` option to check that the generator has been installed successfully.
@@ -47,22 +51,23 @@ Follow the instructions below for installing `platys` on a Linux systems.
 1. Run this command to download the current stable release of the platys Stack Generator:
 
   ```
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.2.0/platys.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
 
   ```
+cd /tmp
 tar zvxf /tmp/platys.tar.gz 
 sudo mv platys.dist/ /usr/local/lib/
-sudo chown -R root:root /usr/local/lib/platys.dist/
+sudo chown -R root:root /usr/local/bin/platys
 sudo rm /tmp/platys.tar.gz 
 ```
 
 3. Create a symbolic link to the platys executable
 
   ```
-sudo ln -s /usr/local/lib/platys.dist/platys /usr/local/bin/platys
+sudo ln -s /usr/local/bin/platys /usr/bin/platys
 ```
 
 4. Use the `--version` option to check that the generator has been installed successfully.
@@ -81,10 +86,19 @@ Follow the instructions below for installing `platys` on a Windows system.
 1. Run this command to download the current stable release of the platys Stack Generator from Windows Powershell:
 
   ```
-curl "https://github.com/TrivadisPF/platys/releases/download/2.2.0/platys.exe" -o c:/Windows/platys.exe
+curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0-RC4_windows_x86_64.zip" -o c:/temp/platys.zip
 ```
 
-2. Use the `--version` option to check that the generator has been installed successfully.
+2. Unzip and move it to `/usr/local/bin`
+
+  ```
+cd /temp
+unzip platys.zip
+cp platys.exe c:/Windows/
+rm /tmp/platys.zip
+```
+
+3. Use the `--version` option to check that the generator has been installed successfully.
 
   ```
 $ platys --version
