@@ -214,6 +214,10 @@ func isPlatysValid(platys YAMLFile, ymlConfig yaml.Node) {
 
 	}
 
+	if platys.Platys.Structure != "subfolder" && platys.Platys.Structure != "flat" {
+		log.Fatal(fmt.Sprintf("Unable to process config file as value for [structure] is invalid, received [%v]. Accepted values are [flat|subfolder] "), platys.Platys.Structure)
+	}
+
 }
 
 func printInfoIfNecessary(platys YAMLFile) {
