@@ -1,5 +1,16 @@
 # `platys` - What's new?
 
+## What's new in 2.3.0
+
+Platys 2.3.0 is a port from the previous Python based implementation to a Golang based version. The main reason for that was to get better portability between Mac, Linux and Windows. 
+
+### Enhancements
+
+* the short arguments of the various commands (`gen`, `init`, ...) had to be renamed (as go only supports one letter short arguments names).
+* the following platys properties in config.yml have been renamed (replace these if you have an existing `platys` platform):
+  *  from `stack-image-name` to `platform-stack`
+  *  from `stack-image-version` to `platform-stack-version`
+
 ## What's new in 2.2.0
 
 Platys 2.2.0 contains the following new functionalities and enhancements:
