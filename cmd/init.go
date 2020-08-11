@@ -120,6 +120,10 @@ By default 'config.yml' is used for the name of the config file, which is create
 		}
 
 		if len(structure) > 0 {
+
+			if structure != "subfolder" && structure != "flat" {
+				log.Fatal(fmt.Sprintf("Invalid value for  [structure] received [%v]. Accepted values are [flat|subfolder] "), structure)
+			}
 			updateConfig("structure", structure, &ymlConfig)
 		}
 
