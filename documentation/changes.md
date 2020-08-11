@@ -6,6 +6,7 @@ Platys 2.3.0 is a port from the previous Python based implementation to a Golang
 
 ### Enhancements
 
+* added the Platys Slack Workspace to the [Platys homepage](../README.md)
 * the short arguments of the various commands (`gen`, `init`, ...) had to be renamed (as go only supports one letter short arguments names).
 * the following platys properties in config.yml have been renamed (replace these if you have an existing `platys` platform):
   *  from `stack-image-name` to `platform-stack`
