@@ -8,18 +8,3 @@
 Copyright (c) 2019-2020 Trivadis
 
 
-Install the required packages
-
-```bash
-pip3 install docker
-pip3 install ruamel.yaml==0.16.4
-pip3 install click
-```
-
-Build the binaries with the appropriate options
-
-```bash
-sudo apt-get install -y nuitka
-pip3 install nuitka
-python3 -m nuitka --follow-imports --standalone --show-progress platys.py
-```
