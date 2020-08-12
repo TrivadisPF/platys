@@ -86,7 +86,7 @@ Follow the instructions below for installing `platys` on a Windows system.
 1. Run this command to download the current stable release of the platys Stack Generator from Windows Powershell:
 
   ```
-curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0-RC4_windows_x86_64.zip" -o c:/temp/platys.zip
+curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_windows_x86_64.zip" -o c:/temp/platys.zip
 ```
 
 2. Unzip and move it to `/usr/local/bin`
