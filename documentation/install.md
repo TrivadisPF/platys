@@ -19,7 +19,7 @@ You also need an internet connection in order to download the necessary images.
 
 Follow the instructions below for installing `platys` on a Mac systems.  
 
-1. Run this command to download the current stable release of the platys Stack Generator:
+1. Run this command to download the current stable release of the `platys`:
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
@@ -30,16 +30,15 @@ sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platy
   ```
 cd /tmp
 tar zvxf /tmp/platys.tar.gz 
-sudo mv platys /usr/local/lib/
-sudo chown -R root:root /usr/local/bin/platys
+sudo mv platys /usr/local/bin/
 sudo rm /tmp/platys.tar.gz 
 ```
 
-3. Use the `--version` option to check that the generator has been installed successfully.
+3. Use the `version` command to check that `platys` has been installed successfully.
 
   ```
-$ platys --version
-Platys - Trivadis Platform in a Box - v2.2.0
+$ platys version
+Platys - Trivadis Platform in a Box - v 2.3.0
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -48,7 +47,7 @@ Copyright (c) 2018-2020, Trivadis AG
 
 Follow the instructions below for installing `platys` on a Linux systems.  
 
-1. Run this command to download the current stable release of the platys Stack Generator:
+1. Run this command to download the current stable release of the `platys`:
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
@@ -59,22 +58,16 @@ sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platy
   ```
 cd /tmp
 tar zvxf /tmp/platys.tar.gz 
-sudo mv platys.dist/ /usr/local/lib/
-sudo chown -R root:root /usr/local/bin/platys
+sudo mv platys /usr/local/bin/
+sudo chown root:root /usr/local/bin/platys
 sudo rm /tmp/platys.tar.gz 
 ```
 
-3. Create a symbolic link to the platys executable
+3. Use the `version` command to check that `platys`  has been installed successfully.
 
   ```
-sudo ln -s /usr/local/bin/platys /usr/bin/platys
-```
-
-4. Use the `--version` option to check that the generator has been installed successfully.
-
-  ```
-$ platys --version
-platys - Trivadis Platform in a Box - v2.2.0
+$ platys version
+Platys - Trivadis Platform in a Box - v 2.3.0
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -83,26 +76,38 @@ Copyright (c) 2018-2020, Trivadis AG
 
 Follow the instructions below for installing `platys` on a Windows system. 
 
-1. Run this command to download the current stable release of the platys Stack Generator from Windows Powershell:
+1. From a Windows Powershell, run this command to download the current stable release of the `platys`:
 
   ```
-curl -L "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0-RC4_windows_x86_64.zip" -o c:/temp/platys.zip
+Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.3.0/platys_2.3.0_windows_x86_64.zip" -OutFile platys.zip
 ```
 
-2. Unzip and move it to `/usr/local/bin`
+2. Expand the zip archive into `ProgramFiles\Platys` and remove the zip file:
 
   ```
-cd /temp
-unzip platys.zip
-cp platys.exe c:/Windows/
-rm /tmp/platys.zip
+Expand-Archive -LiteralPath platys.zip -DestinationPath $Env:ProgramFiles\Platys
+rm platys.zip
 ```
 
-3. Use the `--version` option to check that the generator has been installed successfully.
+3. Add the Platys folder to the `PATH` environment variable 
 
   ```
-$ platys --version
-platys - Trivadis Platform in a Box - v2.2.0
+$currentpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path
+```
+
+  ```
+$newpath = “$currentpath;C:\Program Files\Platys\”
+```
+
+  ```
+Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newpath
+```
+
+4. Restart the PowerShell terminal andu use the `version` command to check that `platys` has been installed successfully.
+
+  ```
+$ platys version
+Platys - Trivadis Platform in a Box - v 2.3.0
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -110,11 +115,23 @@ Copyright (c) 2018-2020, Trivadis AG
    
 ## Uninstallation
 
+### Mac OS-X and Linux
+
 To uninstall `platys` perform
 
 ```
 sudo rm /usr/local/bin/platys
 ```
+
+### Windows
+
+To uninstall `platys` perform
+
+```
+rm 'C:\Program Files\Platys'
+```
+
+Remove `C:\Program Files\Platys` from the `Path` environment variable.
    
 ## Where to go next
 
