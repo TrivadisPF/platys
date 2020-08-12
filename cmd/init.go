@@ -50,7 +50,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 		_, err = os.Stat("./" + configFile)
 
 		if err == nil && !force {
-			log.Fatal("config.yml already exists if you want to override it use the [-f] option")
+			log.Fatal(fmt.Sprintf("[%s] already exists if you want to override it use the [-f] option", configFile))
 		}
 
 		var ymlConfig yaml.Node
