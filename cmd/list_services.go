@@ -23,7 +23,7 @@ var listServicesCmd = &cobra.Command{
 	Long:  `List the services contained in the given version of the platys tool`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		var ymlConfig map[interface{}]interface{}
+		var ymlConfig yaml.Node
 		err := yaml.Unmarshal([]byte(pullConfig()), &ymlConfig)
 
 		if err != nil {
@@ -34,8 +34,9 @@ var listServicesCmd = &cobra.Command{
 		fmt.Printf("* The following services are available in [ %v : %v ]  * \n", Stack, Version)
 		fmt.Println("**********************************************************************************************")
 
-		for k, _ := range ymlConfig {
-			services := serviceRegex.FindStringSubmatch(fmt.Sprintf("%v", k))
+		for _, k := range ymlConfig.Content[0].Content {
+
+			services := serviceRegex.FindStringSubmatch(fmt.Sprintf("%v", k.Value))
 			if len(services) > 0 {
 				fmt.Println(services[1])
 			}
