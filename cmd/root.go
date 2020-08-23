@@ -14,6 +14,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 )
 
 var Stack string
@@ -215,4 +216,12 @@ func in_array(val string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func currentUser() string {
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal("Unable to start docker container as current user cannot be determined")
+	}
+	return usr.Uid + ":" + usr.Gid
 }

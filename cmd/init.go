@@ -68,10 +68,13 @@ By default 'config.yml' is used for the name of the config file, which is create
 			copied := 0
 			copyNext := false
 
-			for _, n := range servicesYml {
+			for i, n := range servicesYml {
 
 				if copyNext {
-					n.Value = "true"
+					if strings.Contains(servicesYml[i-1].Value, "_enable") { // change the value of the key only if it's a service (i.e don't do this for use timezone etc.)
+						n.Value = "true"
+					}
+
 					updatedYml = append(updatedYml, n)
 					copied++
 					copyNext = false
@@ -111,7 +114,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 				}
 			}
 
-			updatedYml = updatedYml[:copied]
+			updatedYml = updatedYml[:copied] //create a new slice by copying the updated one
 			ymlConfig.Content[0].Content = updatedYml
 		}
 
@@ -130,13 +133,16 @@ By default 'config.yml' is used for the name of the config file, which is create
 		b, _ := yaml.Marshal(&ymlConfig)
 		b = addRootIndent(b, 6)
 
-		file, err := os.OpenFile(configFile, os.O_WRONLY|os.O_CREATE, 0755)
-
+		file, err := os.OpenFile(configFile, os.O_RDWR|os.O_CREATE, 0755)
+		defer file.Close()
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to open file %v", err))
 		}
 
-		defer file.Close()
+		err = file.Truncate(0) // clear the contents of the file as to do not have stale data when writing (will append)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Unable to clear file [%v] contents [%v]", configFile, err))
+		}
 
 		for _, s := range strings.SplitN(string(b), "\n", -1) { // write updated config file
 			_, err = file.Write([]byte(s + "\n"))

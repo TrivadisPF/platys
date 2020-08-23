@@ -131,8 +131,10 @@ var genCmd = &cobra.Command{
 			Image: platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
 			Tty:   true,
 			Env:   env,
+			User:  currentUser(),
 		},
 			&container.HostConfig{
+
 				Mounts: []mount.Mount{
 					{
 						Target:   "/tmp/config.yml", // path in the container
