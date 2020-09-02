@@ -135,6 +135,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 
 		file, err := os.OpenFile(configFile, os.O_RDWR|os.O_CREATE, 0755)
 		defer file.Close()
+
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to open file %v", err))
 		}

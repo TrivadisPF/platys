@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -10,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 )
 
@@ -127,12 +129,25 @@ var genCmd = &cobra.Command{
 
 		cli, ctx := initClient()
 
-		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
-			Tty:   true,
-			Env:   env,
-			User:  currentUser(),
-		},
+		var containerConfig = container.Config{}
+		if runtime.GOOS == "windows" {
+			containerConfig = container.Config{
+				Image: platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
+				Tty:   true,
+				Env:   env}
+
+		} else {
+			containerConfig = container.Config{
+				Image:        platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
+				Tty:          true,
+				AttachStderr: true,
+				AttachStdout: true,
+				Env:          env,
+				User:         currentUser(),
+			}
+
+		}
+		resp, err := cli.ContainerCreate(ctx, &containerConfig,
 			&container.HostConfig{
 
 				Mounts: []mount.Mount{
@@ -152,7 +167,7 @@ var genCmd = &cobra.Command{
 			}, nil, containerName)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
@@ -163,17 +178,21 @@ var genCmd = &cobra.Command{
 		select {
 		case err := <-errCh:
 			if err != nil {
-				panic(err)
+				log.Fatal(err)
 			}
 		case <-statusCh:
 		}
 
-		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
+		defer out.Close()
 
-		log.Print(out)
+		scanner := bufio.NewScanner(out)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
 
 		stopRemoveContainer(resp.ID, cli, ctx)
 

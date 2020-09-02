@@ -94,7 +94,8 @@ func pullConfig() string {
 	}
 	tr := tar.NewReader(reader)
 
-	var config_file = ""
+	var configFile = ""
+
 	for {
 		_, err := tr.Next()
 		if err == io.EOF { // end of tar archive
@@ -106,13 +107,13 @@ func pullConfig() string {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(tr)
 
-		config_file = buf.String()
+		configFile = buf.String()
 	}
 
 	stdcopy.StdCopy(os.Stdout, os.Stderr, out)
 	stopRemoveContainer(resp.ID, cli, ctx)
 
-	return config_file
+	return configFile
 }
 
 // extracts the provided file/folder from the docker image
@@ -184,6 +185,9 @@ func initClient() (*client.Client, context.Context) {
 	if err != nil {
 		panic(err)
 	}
+
+	defer reader.Close()
+
 	io.Copy(os.Stdout, reader)
 
 	return cli, ctx
