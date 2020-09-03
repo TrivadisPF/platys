@@ -1,5 +1,12 @@
 # `platys` - What's new?
 
+## What's new in 2.4.0
+
+Platys 2.4.0 contains the following new functionalities and enhancements:
+
+### Enhancements
+### Bug fixes
+
 ## What's new in 2.3.0
 
 Platys 2.3.0 is a port from the previous Python based implementation to a Golang based version. The main reason for that was to get better portability between Mac, Linux and Windows. 
