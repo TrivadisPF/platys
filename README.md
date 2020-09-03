@@ -14,13 +14,19 @@ There is no question that running workloads in containers simplifies deployment 
 
 Today Kubernetes is the the most popular container orchestrator, but it comes with a lot of complexity. For production setups, Kubernetes is definitely one way to go. But for local, development or small-scale Proof-of-Concepts, we like to use Docker Compose, a very simple approach to container orchestration. With Compose, you use a YAML file to configure your application’s services.
 
-But the longer you use Docker Compose, the more of these YAML files you get and to maintain them is quite a challenge. Especially as a consultant, coach, trainer, technology evangelist, you will be using different Compose setups for different environments. 
- 
- * But how do you easily upgrade to a new version of a container, i.e. Apache Kafka? - You manually have to go through all of these Compose files, which is a lot of work. 
- * What if you want to add a new service to one environment and you know that you have used it previously in another environment? - You have to copy-paste the config from one YAML to another. 
- * How to make sure that one service from another environment will work with all the configs and port settings of your environment?
+Especially as a consultant, coach, trainer, technology evangelist, you will be using different Compose setups for different environments.
 
-For these and some other challenges we were looking for a better solution: Wouldn't it be easier to generate the Docker Compose YAML, based on a simple configuration with some ON/OFF switches of all supported services? 
+So the longer you use Docker Compose, the more of these YAML files you get and to maintain them is quite a challenge: 
+ 
+ * But how do you easily upgrade to a new version of a container, i.e. Apache Kafka?
+ * Do you manually have to go through all of these Compose files, which is a lot of work and prone to errors? 
+ * What if you want to add a new service to one environment and you know that you have used it previously in another environment?
+ * Do you copy-paste configs from one YAML to another?
+ * How do you make sure that one service from another environment will work with all the configs and port settings of your other environment?
+
+For these and some other challenges we were looking for a better solution: 
+ 
+ * Wouldn't it be easier to generate the Docker Compose YAML, based on a simple configuration with some ON/OFF switches of all supported services? 
 
 Enter the world of `platys`...
 
