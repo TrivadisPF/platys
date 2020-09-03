@@ -6,7 +6,7 @@ Platys 2.4.0 contains the following new functionalities and enhancements:
 
 ### Enhancements
 
-* Would be nice to have the output of "platys list_services" ordered
+* the output of "platys list_services" is now ordered
 
 ### Bug fixes
 
