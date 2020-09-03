@@ -5,7 +5,15 @@
 Platys 2.4.0 contains the following new functionalities and enhancements:
 
 ### Enhancements
+
+* Would be nice to have the output of "platys list_services" ordered
+
 ### Bug fixes
+
+* if there is an error in the generator (inside docker-compose-templer), it is not shown on the Platys console
+* "platys init" with the "-f" (force) flag does not work correctly
+* Wrong values for global configuration after "platys init --enable-services" 
+* After running "platys gen", the "generated" folders are owned by root
 
 ## What's new in 2.3.0
 
