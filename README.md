@@ -26,10 +26,13 @@ A concrete _Platform_ is always generated based on a given _Platform Stack_. A p
 
 ![platys](./documentation/images/platys-tool.png)
 
+The digram shows the 5 necessary steps to create a new platform and use it: 
+
 1. Initialise a new _Platform_ context by specifying a _Platform Stack_. Optionally a set of services to be enabled can be specified with the `init` command. 
 2. Optionally edit the `config.yml` to enable services and change default values of configuration settings.
 3. Generate the artefacts for the platform (mainly the `docker-compose.yml` but also some configuration files) by running the `gen` command.
 4. Run `docker-compose up` to start your platform.
+5. Use the services of your platform, once they are stared and ready to use.
 
 Currently there is one supported Platform Stack:
 
@@ -45,7 +48,7 @@ Today Kubernetes is the most popular container orchestrator, but it comes with a
 
 Especially as a consultant, coach, trainer, technology evangelist, you will be using different Compose setups for different environments.
 
-So the longer you use Docker Compose, the more of these YAML files you get and to maintain them is quite a challenge: 
+The longer you use Docker Compose, the more of these YAML files you get and to maintain them is quite a challenge: 
  
  * But how do you easily upgrade to a new version of a container, i.e. Apache Kafka?
  * Do you manually have to go through all of these Compose files, which is a lot of work and prone to errors? 
@@ -61,7 +64,7 @@ Enter the world of `platys`...
 
 ## Where can I run `platys`?
 
-`platys` runs on Windows, macOS and 64-bit Linux. 
+`platys` is supported on Windows, macOS and 64-bit Linux. 
 
 Behind the scenes, `platys` runs the generator (supporting given Platform Stack) as a Docker container. Therefore you need to have [Docker](https://www.docker.com/get-started) installed on the machine where you create a Platform. To run the Platform, you also need to have [Docker Compose](https://docs.docker.com/compose/) installed on the target machine, which can be different to the one you use for generating the platform.  
 
