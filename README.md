@@ -92,6 +92,11 @@ See [What's new?](./documentation/changes.md) for a detailed list of changes.
 * [Service Design Decisions](./documentation/service-design.md)
 * [Creating and maintaining a Platform Stack](./documentation/creating-and-maintaining-platform-stack.md)
 
+**Platform Stacks**
+
+* [Adding additional services not supported by a Platform Stack](./documentation/docker-compose-override.md)
+* [Upgrade to a new platform stack version](./documentation/upgrade-platform-stack.md)
+
 
 
 
