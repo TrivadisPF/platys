@@ -45,7 +45,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", true, "verbose output")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 
 }
 
