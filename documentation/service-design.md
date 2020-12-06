@@ -41,3 +41,18 @@ HIVEMQ3_enable: false #needs MQTT_ENABLE = true
 HIVEMQ4_enable: false #needs MQTT_ENABLE = true
 ```
 
+## Omit a value, if not defined
+
+Let's say `s3endpoint` is a variable, which can be undefined. In that case you can use the omit clause to to generate the given line at all
+
+```
+environment:
+  ENDPOINT: '{{s3Endpoint | default(omit) }}'
+```
+
+Let's say `s3endpoint` is a variable, which can be undefined. If it is defined, we need a value of `true` and otherwise we want to omit generating the given line. 
+
+```
+environment:
+  USE_S3: {{'true' if s3Endpoint is defined else omit }}
+
