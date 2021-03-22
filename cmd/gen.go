@@ -8,8 +8,10 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"runtime"
 	"strconv"
@@ -50,8 +52,17 @@ var genCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		var services yaml.Node
-
 		var platys YAMLFile
+		var err error
+
+		if configUrl != "" {
+			log.Print(fmt.Sprintf("[configUrl] was defined with value [%v] overwritting config file", configUrl))
+			configFile, err = downloadRemoteFile(configUrl)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
 		if configFile == "" {
 			log.Fatal("Unable to run command as configFile is null")
@@ -123,10 +134,6 @@ var genCmd = &cobra.Command{
 			env = append(env, "DEL_EMPTY_LINES=0")
 		}
 
-		if configUrl != "" {
-			env = append(env, "CONFIG_URL="+configUrl)
-		}
-
 		cli, ctx := initClient()
 
 		var containerConfig = container.Config{}
@@ -153,7 +160,7 @@ var genCmd = &cobra.Command{
 				Mounts: []mount.Mount{
 					{
 						Target:   "/tmp/config.yml", // path in the container
-						Source:   currentFolder + "/config.yml",
+						Source:   configFile,
 						Type:     mount.TypeBind,
 						ReadOnly: false,
 					},
@@ -226,7 +233,7 @@ func isPlatysValid(platys YAMLFile, ymlConfig yaml.Node) {
 
 		if isOlderVersion(ymlConfig) {
 			log.Fatal(
-				`The config file is not properly key names [stack-image-name] , [stack-image-version] are legacy parameters and should be manually renamed
+				`The config file is not properly formatted: key names [stack-image-name] , [stack-image-version] are legacy parameters and should be manually renamed
 					[stack-image-name --> platform-stack] , [stack-image-version -->platform-stack-version ]`)
 
 		} else {
@@ -250,6 +257,7 @@ func printInfoIfNecessary(platys YAMLFile) {
 
 }
 
+//Checks wether the YAML file is for an older version of Platys
 func isOlderVersion(rootNode yaml.Node) bool {
 
 	platys := rootNode.Content[0].Content
@@ -267,4 +275,31 @@ func isOlderVersion(rootNode yaml.Node) bool {
 	}
 
 	return false
+}
+
+func downloadRemoteFile(configUrl string) (string, error) {
+	return DownloadFile(configUrl)
+
+}
+
+//Downloads a remote config file to a local one
+func DownloadFile(url string) (string, error) {
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Create the file
+	out, err := ioutil.TempFile("", "config*.yml")
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	return out.Name(), err
 }
