@@ -6,3 +6,4 @@ rm -Rf etc
 rm -Rf init
 rm -Rf plugins
 rm -Rf scripts
+rm -Rf licenses
