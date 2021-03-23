@@ -38,7 +38,7 @@ sudo rm /tmp/platys.tar.gz
 
   ```
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.0
+Platys - Trivadis Platform in a Box - v 2.4.1
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```

@@ -55,10 +55,9 @@ var genCmd = &cobra.Command{
 		var platys YAMLFile
 		var err error
 
-		if configUrl != "" {
+		if configUrl != "" { // configUrl was defined attempt to download it and use it
 			log.Print(fmt.Sprintf("[configUrl] was defined with value [%v] overwritting config file", configUrl))
 			configFile, err = downloadRemoteFile(configUrl)
-
 			if err != nil {
 				log.Fatal(err)
 			}
