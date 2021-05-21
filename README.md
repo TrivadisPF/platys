@@ -86,6 +86,7 @@ See [What's new?](./documentation/changes.md) for a detailed list of changes.
 * [Frequently Asked Questions](./documentation/faq.md)
 * [Command line reference](./documentation/command-line-ref.md)
 * [Glossary of Terms](./documentation/glossary.md)
+* [How to use a platys-generated stack without Internet](./documentation/docker-compose-without-internet.md)
 
 **Development**
 
