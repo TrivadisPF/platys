@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 )
@@ -39,7 +40,7 @@ func init() {
 	genCmd.Flags().BoolVarP(&delEmptyLines, "del-empty-lines", "l", true, "Remove empty lines from the docker-compose.yml file.")
 	genCmd.Flags().StringVarP(&configUrl, "config-url", "u", "", "The URL to a remote config file")
 	genCmd.Flags().StringVarP(&configFile, "config-file", "c", "config.yml", "The name of the local config file (defaults to config.yml)")
-	genCmd.MarkFlagRequired("base-folder")
+	_ = genCmd.MarkFlagRequired("base-folder")
 }
 
 var genCmd = &cobra.Command{
@@ -153,13 +154,18 @@ var genCmd = &cobra.Command{
 			}
 
 		}
+		fullPathConfigFile, err := filepath.Abs(configFile) // full path in required for mounting files in the container
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		resp, err := cli.ContainerCreate(ctx, &containerConfig,
 			&container.HostConfig{
 
 				Mounts: []mount.Mount{
 					{
 						Target:   "/tmp/config.yml", // path in the container
-						Source:   configFile,
+						Source:   fullPathConfigFile,
 						Type:     mount.TypeBind,
 						ReadOnly: false,
 					},
@@ -193,7 +199,9 @@ var genCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer out.Close()
+		defer func(out io.ReadCloser) {
+			_ = out.Close()
+		}(out)
 
 		scanner := bufio.NewScanner(out)
 		for scanner.Scan() {
@@ -289,14 +297,24 @@ func DownloadFile(url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Unable to download configuration file. Error -> [%v]", err))
+		}
+	}(resp.Body)
 
 	// Create the file
 	out, err := ioutil.TempFile("", "config*.yml")
 	if err != nil {
 		return "", err
 	}
-	defer out.Close()
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+			log.Fatal(fmt.Sprintf("Unable to write configuration file. Error -> [%v]", err))
+		}
+	}(out)
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
