@@ -23,7 +23,7 @@ var Verbose bool
 
 const containerName = "platys"
 const configFilePath = "/opt/mdps-gen/vars/config.yml"
-const version = "2.4.1"
+const version = "2.4.2"
 
 var versionInfo = fmt.Sprintf(
 	`Platys - Trivadis Platform in a Box - v %v

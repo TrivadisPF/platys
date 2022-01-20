@@ -1,5 +1,9 @@
 # `platys` - What's new?
 
+## What's new in 2.4.2
+
+Fix issue that caused an error when using gen with a relative path
+
 ## What's new in 2.4.0
 
 Platys 2.4.0 contains the following new functionalities and enhancements:

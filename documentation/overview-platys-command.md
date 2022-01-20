@@ -7,7 +7,7 @@ This page provides the usage information for the `platys` Command.
 You can also see this information by running `platys --help` from the command line.
 
 ```
-Platys - Trivadis Platform in a Box - v 2.4.1
+Platys - Trivadis Platform in a Box - v 2.4.2
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 
@@ -37,7 +37,7 @@ You can use platys binary, `platys [OPTIONS] [COMMAND] [ARGS...]`, to generate a
 
 ```
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.1
+Platys - Trivadis Platform in a Box - v 2.4.2
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
