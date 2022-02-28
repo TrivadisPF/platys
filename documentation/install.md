@@ -21,15 +21,15 @@ Follow the instructions below for installing `platys` on a Mac systems.
 
 1. Run this command to download the current stable release of the `platys`:
 
-  * for Macs with Intel
+    * Macs with Intel
 
-  ```
+    ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
-  * for Macs with Apple Silicon (M1)
+    * Macs with Apple Silicon (M1)
 
-  ```
+    ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
@@ -58,13 +58,13 @@ Follow the instructions below for installing `platys` on a Linux systems.
 
 1. Run this command to download the current stable release of the `platys`:
 
-  * for Linux on Intel
+if on Intel
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
-  * for Linux on Arm64
+if on Arm64
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
@@ -154,5 +154,4 @@ Remove `C:\Program Files\Platys` from the `Path` environment variable.
 
 * [Getting Started with `platys` and the `modern-data-platform` platform stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md)
 * [Explore the full list of platys commands](command-line-ref.md)
-
-2.4.3
+* [Platys latest release](https://github.com/TrivadisPF/platys/releases/latest)
