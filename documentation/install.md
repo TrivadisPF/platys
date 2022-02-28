@@ -21,15 +21,15 @@ Follow the instructions below for installing `platys` on a Mac systems.
 
 1. Run this command to download the current stable release of the `platys`:
 
-    * Macs with Intel
+  * Macs with Intel
 
-    ```
+  ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
-    * Macs with Apple Silicon (M1)
+  * Macs with Apple Silicon (M1)
 
-    ```
+  ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
@@ -58,13 +58,13 @@ Follow the instructions below for installing `platys` on a Linux systems.
 
 1. Run this command to download the current stable release of the `platys`:
 
-if on Intel
+  * if on Intel
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
-if on Arm64
+  * if on Arm64
 
   ```
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
