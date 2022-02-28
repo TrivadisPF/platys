@@ -1,6 +1,6 @@
 env:
   - GO111MODULE=on
-  - GOPROXY=https://goproxy.io
+  - GOPROXY=https://proxy.golang.org,direct
 
 before:
   hooks:
@@ -18,9 +18,9 @@ builds:
       - 386
       - amd64
       - arm64
-    ignore:
-      - goos: windows
-        goarch: arm64
+    goarm:
+      - 6
+      - 7
 archives:
   -
     replacements:
