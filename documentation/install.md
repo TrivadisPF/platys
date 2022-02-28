@@ -22,7 +22,7 @@ Follow the instructions below for installing `platys` on a Mac systems.
 1. Run this command to download the current stable release of the `platys`:
 
   ```
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.2/platys_2.4.2_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -38,7 +38,7 @@ sudo rm /tmp/platys.tar.gz
 
   ```
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.2
+Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -50,7 +50,7 @@ Follow the instructions below for installing `platys` on a Linux systems.
 1. Run this command to download the current stable release of the `platys`:
 
   ```
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.2/platys_2.4.2_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -67,7 +67,7 @@ sudo rm /tmp/platys.tar.gz
 
   ```
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.2
+Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -79,7 +79,7 @@ Follow the instructions below for installing `platys` on a Windows system.
 1. From a Windows Powershell, run this command to download the current stable release of the `platys`:
 
   ```
-Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.2/platys_2.4.2_windows_x86_64.zip" -OutFile platys.zip
+Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_windows_x86_64.zip" -OutFile platys.zip
 ```
 
 2. Expand the zip archive into `ProgramFiles\Platys` and remove the zip file:
@@ -107,7 +107,7 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
   ```
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.2
+Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -138,4 +138,4 @@ Remove `C:\Program Files\Platys` from the `Path` environment variable.
 * [Getting Started with `platys` and the `modern-data-platform` platform stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md)
 * [Explore the full list of platys commands](command-line-ref.md)
 
-2.4.2
+2.4.3
