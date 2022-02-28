@@ -18,7 +18,9 @@ builds:
       - 386
       - amd64
       - arm64
-
+    ignore:
+      - goos: windows
+        goarch: arm64
 archives:
   -
     replacements:
