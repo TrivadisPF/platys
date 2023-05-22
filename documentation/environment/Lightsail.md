@@ -93,7 +93,7 @@ into the **Launch Script** edit field
  
 ![Alt Image Text](./images/lightsail-create-instance-3.png "Lightsail Homepage")
 
-Click on **Change SSH key pair** and leave the **Default** selected and then click on **Download** and save the file to a convenient location on your machine. Under **Choose your instance plan** click on the arrow on the right and select the **16 GB** instance.   
+Click on **Change SSH key pair** and leave the **Default** selected and then click on **Download** and save the file to a convenient location on your machine. Under **Choose your instance plan** select the size for your instance. Depending on what you later want to run inside your stack, you should choose an instance with at least **4GB** of RAM (of course the more docker containers you run, the more memory you will need).    
 
 Under **Identify your instance** enter **Ubuntu-Analytics-Platform** into the edit field. 
 
