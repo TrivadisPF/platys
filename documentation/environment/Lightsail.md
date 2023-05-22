@@ -1,5 +1,7 @@
 # Provision on AWS Lightsail
 
+A virtual machine with both Docker and Platys installed can be easily provisioned using AWS Lightsail with a "one-click" install.
+
 Navigate to the [AWS Console](http://console.aws.amazon.com) and login with your user. Click on the [Lightsail service](https://lightsail.aws.amazon.com/ls/webapp/home/instances).
 
 ![Alt Image Text](./images/lightsail-homepage.png "Lightsail Homepage")
@@ -21,7 +23,7 @@ Scroll down to **Launch script** and add the following script
 export USERNAME=ubuntu
 # ====> you might want to change the password to something more secure !!
 export PASSWORD=abc123!
-export PLATYS_VERSION=2.4.0
+export PLATYS_VERSION=2.4.2
 export NETWORK_NAME=eth0
 
 # Prepare Environment Variables 
@@ -81,7 +83,6 @@ sudo sysctl -w vm.max_map_count=262144
 # Make Environment Variables persistent
 sudo echo "export PUBLIC_IP=$PUBLIC_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
 sudo echo "export DOCKER_HOST_IP=$DOCKER_HOST_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
-sudo echo "export DATAPLATFORM_HOME=$PWD" | sudo tee -a /etc/profile.d/platys-platform-env.sh
 sudo echo "export COMPOSE_HTTP_TIMEOUT=300 | sudo tee -a /etc/profile.d/platys-platform-env.sh
 
 # Source the environment
@@ -111,7 +112,7 @@ Click on the instance to navigate to the image details page. On the right you ca
 Next we have to configure the Firewall to allow traffic into the Lightsail instance. 
 
 Click on the **Networking** tab/link to navigate to the network settings and under **Firewall** click on **+ Add another**.
-We allow TCP traffic on ports 28000 - 28200 by selecting **Custom**, entering **28000 - 28200** into the **Port range** field and then click **Save**. 
+We allow TCP traffic on ports 28000 - 28400 by selecting **Custom**, entering **28000 - 28400** into the **Port or Range** field and then click **Save**. 
 
 ![Alt Image Text](./images/lightsail-image-networking-add-firewall-rule.png "Lightsail Homepage")
 
@@ -122,9 +123,37 @@ Navigate to the **Connect** tab and click **Connect using SSH** to open the cons
 tail -f /var/log/cloud-init-output.log --lines 1000
 ```
 
-The initialisation is finished when you see the `Creating xxxxx .... done` lines after all the docker images have been downloaded, which takes a couple of minutes. 
+The initialisation is finished when you see a line
 
-![Alt Image Text](./images/lightsail-create-instance-log-file.png "Lightsail Homepage")
+```bash
+Cloud-init v. 22.4.2-0ubuntu0~22.04.1 finished at Mon, 22 May 2023 10:07:43 +0000. Datasource DataSourceEc2Local.  Up 132.85 seconds
+```
+
+Check that `platys` has been install successfully by executing `platys -v`
+
+```bash
+ubuntu@ip-172-26-4-247:~$ platys -v
+Platys - Trivadis Platform in a Box - v 2.4.2
+https://github.com/trivadispf/platys
+Copyright (c) 2018-2020, Trivadis AG
+Usage:
+  platys [flags]
+  platys [command]
+
+Available Commands:
+  clean         Cleans the contents in the $PATH/container-volume folder
+  gen           Generates all the needed artifacts for the docker-based modern (data) platform  
+  help          Help about any command  
+  init          Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial config file, if one does not already exists  
+  list_services List the services  
+  stacks        Lists the predefined stacks available for the init command  
+  version       Print the version number of platys
+
+Flags:
+  -h, --help      help for platys  
+  -v, --verbose   verbose outputUse "platys [command] --help" for more information about a command.
+  ubuntu@ip-172-26-4-247:~$
+```
 
 Optionally you can also SSH into the Lightsail instance using the **SSH key pair** you have downloaded above. For that open a terminal window (on Mac / Linux) or Putty (on Windows) and connect as ubuntu to the Public IP address of the instance.   
 
