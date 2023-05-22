@@ -46,13 +46,6 @@ sudo sysctl -w vm.max_map_count=262144
 export PUBLIC_IP=$(curl ipinfo.io/ip)
 export DOCKER_HOST_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
 export COMPOSE_HTTP_TIMEOUT=300
-
-cd /home/ubuntu 
-git clone https://github.com/TrivadisBDS/modern-data-analytics-stack.git
-cd modern-data-analytics-stack/full-stack/docker
-
-# Startup Environment
-docker-compose up
 ```
 
 into the **Launch Script** edit field
