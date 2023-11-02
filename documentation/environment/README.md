@@ -1,4 +1,4 @@
-# Provision of a `platys` platform 
+# Provision of a `platys`-ready platform 
 
 The Analytics Stack can be provisioned to various environments. Find the options and description here:
 
@@ -21,8 +21,3 @@ To simplify working with the Streaming Platform and for the links below to work,
 ```
 
 Replace the IP address by the public IP address of the Docker host. 
-
-### Browser Bookmarks für Chrome
-
-In the folder `browser-bookmarks` you can find a file which can be imported into Google Chrome to get bookmarks for all the Web-based GUIs which are part of the stack. In order for them to work you have to add the alias `analyticsplatform` to the `/etc/hosts` file (as shown before)
-

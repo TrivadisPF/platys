@@ -154,3 +154,4 @@ Remove `C:\Program Files\Platys` from the `Path` environment variable.
 * [Getting Started with `platys` and the `modern-data-platform` platform stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md)
 * [Explore the full list of platys commands](command-line-ref.md)
 * [Platys latest release](https://github.com/TrivadisPF/platys/releases/latest)
+
