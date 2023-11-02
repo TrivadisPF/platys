@@ -1,12 +1,11 @@
-# Provision of a `platys`-ready platform 
+# Provision of a `platys`-ready environment 
 
-The Analytics Stack can be provisioned to various environments. Find the options and description here:
+A `platys`-ready environment can be provisioned to various environments. Find the options and description here:
 
   * [AWS Lightsail](./Lightsail.md) - AWS Lightsail is a service in Amazon Web Services (AWS) with which we can easily startup an environment and provide all the necessary bootstrapping as a script. Monthly price of USD 80.- (16GB RAM) or USD 160.- (32 GB RAM).
   * [Azure VM (t.b.d.)]() - Run it inside an Azure VM
   * [Local Docker](./LocalDocker.md) - you have a local Docker and Docker Compose setup in place, either on Windows, on Mac or Linux, which you want to use
   * [Local Virtual Machine with Docker](./LocalVirtualMachine) - a Virtual Machine with Docker and Docker Compose pre-installed will be distributed at by the course infrastructure. You will need 50 GB free disk space.
-
 
 ## Post Provisioning
 

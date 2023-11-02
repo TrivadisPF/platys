@@ -82,6 +82,7 @@ See [What's new?](./documentation/changes.md) for a detailed list of changes.
 **Usage**
 
 * [Installing platys](./documentation/install.md)
+* [Provisioning a platys-ready environment](./documentation/environment/README.md)
 * [Getting Started with `platys` and the `modern-data-platform` platform stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md)
 * [Frequently Asked Questions](./documentation/faq.md)
 * [Command line reference](./documentation/command-line-ref.md)
