@@ -1,4 +1,14 @@
-# Provision on AWS Lightsail
+# Provision a `platys`-ready environment on Amazon Lightsail
+
+Amazon Lightsail offers easy-to-use virtual private server (VPS) instances, containers, storage, databases, and more at a cost-effective monthly price. It allows to easily create and delete development sandboxes and test environments where you can try out new ideas, risk free. By that it is very well-suited for Platys-based environment and its simple provisioning allows for a (almost) 1-click install. Depending on the sizing of the stack, you can choose form the following "T-shirt sizes":
+
+![Alt Image Text](./images/lightsail-tshirt-sizes.png "Lightsail T-Shirt sizes")
+
+Below 4GB of Memory probably doesn't make a lot of sense for a docker-compose stack, so price starts at USD 20 per month. But it is important to state, that you only pay for the minutes you use the VM, if you remove it after a day of usage, you only pay for the day. 
+
+**Note:** you have to terminate the instance to stop the metering, if you only stop the instance, then you will still have to pay for it. You can also use snapshotting to save the state of an instance in a cheaper way and from that snapshot you can later re-create a new instance. Snapshotting is also the way to choose if you want to scale up the instance (to a larger T-Shirt size). 
+
+## Provision a `platys`-ready Lightsail VM 
 
 Navigate to the [AWS Console](http://console.aws.amazon.com) and login with your user. Click on the [Lightsail service](https://lightsail.aws.amazon.com/ls/webapp/home/instances).
 
@@ -17,42 +27,63 @@ Keep **Linux/Unix** for the **Select a platform** and click on **OS Only** and s
 
 Scroll down to **Launch script** and add the following script 
 
-```
-# Install Docker and Docker Compose
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable edge"
-apt-get install -y docker-ce
-sudo usermod -a -G docker ubuntu
+```bash
+export PLATYS_VERSION=2.4.0
+export NETWORK_NAME=ens5
+export USERNAME=ubuntu
+export PASSWORD=abc123!
 
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+# Prepare Environment Variables 
+export PUBLIC_IP=$(curl ipinfo.io/ip)
+export DOCKER_HOST_IP=$(ip addr show ${NETWORK_NAME} | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
 
-# Install ctop
-sudo wget https://github.com/bcicen/ctop/releases/download/v0.7.2/ctop-0.7.2-linux-amd64 -O /usr/local/bin/ctop
-sudo chmod +x /usr/local/bin/ctop
+# allow login by password
+sudo sed -i "s/.*PasswordAuthentication.*/PasswordAuthentication yes/g" /etc/ssh/sshd_config
+echo "${USERNAME}:${PASSWORD}"|chpasswd
+sudo service sshd restart
 
-# Install wget
-apt-get install -y wget
+# add alias "dataplatform" to /etc/hosts
+echo "$DOCKER_HOST_IP     dataplatform" | sudo tee -a /etc/hosts
 
-# Install kafkacat
-apt-get install -y kafkacat
+# Install Docker
+sudo apt-get update
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+sudo mkdir -p /etc/apt/keyrings    
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+sudo usermod -aG docker $USERNAME
+
+# Install Docker Compose Switch
+sudo curl -fL https://github.com/docker/compose-switch/releases/latest/download/docker-compose-linux-amd64 -o /usr/local/bin/compose-switch
+chmod +x /usr/local/bin/compose-switch
+sudo update-alternatives --install /usr/local/bin/docker-compose docker-compose /usr/local/bin/compose-switch 99
+
+# Install Platys
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/${PLATYS_VERSION}/platys_${PLATYS_VERSION}_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
+tar zvxf /tmp/platys.tar.gz 
+sudo mv platys /usr/local/bin/
+sudo chown root:root /usr/local/bin/platys
+sudo rm /tmp/platys.tar.gz 
+
+# Install various Utilities
+sudo apt-get install -y curl jq unzip
 
 # needed for elasticsearch
 sudo sysctl -w vm.max_map_count=262144   
 
-# Prepare Environment Variables
-export PUBLIC_IP=$(curl ipinfo.io/ip)
-export DOCKER_HOST_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
-export COMPOSE_HTTP_TIMEOUT=300
-
-cd /home/ubuntu 
-git clone https://github.com/TrivadisBDS/modern-data-analytics-stack.git
-cd modern-data-analytics-stack/full-stack/docker
-
-# Startup Environment
-docker-compose up
+# Make Environment Variables persistent
+sudo echo "export PUBLIC_IP=$PUBLIC_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
+sudo echo "export DOCKER_HOST_IP=$DOCKER_HOST_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
+sudo echo "export DATAPLATFORM_HOME=$PWD" | sudo tee -a /etc/profile.d/platys-platform-env.sh
 ```
 
 into the **Launch Script** edit field
@@ -101,6 +132,16 @@ ssh -i LightsailDefaultKey-eu-central-1.pem ubuntu@18.196.124.212
 
 Your instance is now ready to use. Complete the post installation steps documented the [here](README.md).
 
+## Using the `platys`-ready environment
+ 
+Now you are ready to use the Platys environment. You can follow the [Getting Started with `platys` and the `modern-data-platform` stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md) to see how to create a `modern-data-platform` stack. 
+
+Or [click here](command-line-ref.md) to explore the full list of platys commands.
+
+## Create a Static IP
+
+You can also create a static IP and assign it to your instance so that the IP won't change in case you have to restart the VM.
+
 ## Stop an Instance
 
 To stop the instance, navigate to the instance overview and click on the drop-down menu and select **Stop**. 
@@ -111,11 +152,15 @@ Click on **Stop** to confirm stopping the instance.
 
 ![Alt Image Text](./images/lightsail-stop-instance-confirm.png "Lightsail Homepage")
 
-A stopped instance will still incur charges, you have to delete the instance completely to stop charges. 
+A stopped instance will still incur charges, you have to terminate (delete) the instance completely to stop charges. 
 
-## Delete an Instance
+## Terminating an Instance
 
-t.b.d.
+To terminate the instance, navigate to the instance overview and click on the drop-down menu and select **Delete**. 
+
+![Alt Image Text](./images/lightsail-terminate-instance.png "Lightsail Homepage")
+
+Click on **Delete** to confirm terminating the instance. 
 
 ## Create a snapshot of an Instance
 
@@ -124,20 +169,4 @@ When an instance is stopped, you can create a snapshot, which you can keep, even
 ![Alt Image Text](./images/lightsail-image-create-snapshot.png "Lightsail Homepage")
 
 You can always recreate an instance based on a snapshot. 
-
-# De-provision the environment
-
-To stop the environment, execute the following command:
-
-```
-docker-compose stop
-```
-
-after that it can be re-started using `docker-compose start`.
-
-To stop and remove all running container, execute the following command:
-
-```
-docker-compose down
-```
 
