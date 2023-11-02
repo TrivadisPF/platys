@@ -1,6 +1,14 @@
-# Provision on AWS Lightsail
+# Provision a `platys`-ready environment on Amazon Lightsail
 
-A virtual machine with both Docker and Platys installed can be easily provisioned using AWS Lightsail with a "one-click" install.
+Amazon Lightsail offers easy-to-use virtual private server (VPS) instances, containers, storage, databases, and more at a cost-effective monthly price. It allows to easily create and delete development sandboxes and test environments where you can try out new ideas, risk free. By that it is very well-suited for Platys-based environment and its simple provisioning allows for a (almost) 1-click install. Depending on the sizing of the stack, you can choose form the following "T-shirt sizes":
+
+![Alt Image Text](./images/lightsail-tshirt-sizes.png "Lightsail T-Shirt sizes")
+
+Below 4GB of Memory probably doesn't make a lot of sense for a docker-compose stack, so price starts at USD 20 per month. But it is important to state, that you only pay for the minutes you use the VM, if you remove it after a day of usage, you only pay for the day. 
+
+**Note:** you have to terminate the instance to stop the metering, if you only stop the instance, then you will still have to pay for it. You can also use snapshotting to save the state of an instance in a cheaper way and from that snapshot you can later re-create a new instance. Snapshotting is also the way to choose if you want to scale up the instance (to a larger T-Shirt size). 
+
+## Provision a `platys`-ready Lightsail VM 
 
 Navigate to the [AWS Console](http://console.aws.amazon.com) and login with your user. Click on the [Lightsail service](https://lightsail.aws.amazon.com/ls/webapp/home/instances).
 
@@ -13,18 +21,17 @@ Click **Create instance** to navigate to the **Create an instance** dialog.
 ![Alt Image Text](./images/lightsail-create-instance-1.png "Lightsail Homepage")
 
 Optionally change the **Instance Location** to a AWS region of your liking.
-Keep **Linux/Unix** for the **Select a platform** and click on **OS Only** and select **Ubuntu 22.04 LTS** for the **Select a blueprint**. 
+Keep **Linux/Unix** for the **Select a platform** and click on **OS Only** and select **Ubuntu 18.04 LTS** for the **Select a blueprint**. 
 
 ![Alt Image Text](./images/lightsail-create-instance-2.png "Lightsail Homepage")
 
 Scroll down to **Launch script** and add the following script 
 
-```
+```bash
+export PLATYS_VERSION=2.4.0
+export NETWORK_NAME=ens5
 export USERNAME=ubuntu
-# ====> you might want to change the password to something more secure !!
 export PASSWORD=abc123!
-export PLATYS_VERSION=2.4.2
-export NETWORK_NAME=eth0
 
 # Prepare Environment Variables 
 export PUBLIC_IP=$(curl ipinfo.io/ip)
@@ -67,15 +74,8 @@ sudo mv platys /usr/local/bin/
 sudo chown root:root /usr/local/bin/platys
 sudo rm /tmp/platys.tar.gz 
 
-# Install ctop
-sudo wget https://github.com/bcicen/ctop/releases/download/v0.7.7/ctop-0.7.7-linux-amd64 -O /usr/local/bin/ctop
-sudo chmod +x /usr/local/bin/ctop
-
-# Install wget, curl, jq
-apt-get install -y wget curl jq tree
-
-# Install kafkacat
-apt-get install -y kafkacat
+# Install various Utilities
+sudo apt-get install -y curl jq unzip
 
 # needed for elasticsearch
 sudo sysctl -w vm.max_map_count=262144   
@@ -83,17 +83,14 @@ sudo sysctl -w vm.max_map_count=262144
 # Make Environment Variables persistent
 sudo echo "export PUBLIC_IP=$PUBLIC_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
 sudo echo "export DOCKER_HOST_IP=$DOCKER_HOST_IP" | sudo tee -a /etc/profile.d/platys-platform-env.sh
-sudo echo "export COMPOSE_HTTP_TIMEOUT=300 | sudo tee -a /etc/profile.d/platys-platform-env.sh
-
-# Source the environment
-source /etc/profile.d/platys-platform-env.sh
+sudo echo "export DATAPLATFORM_HOME=$PWD" | sudo tee -a /etc/profile.d/platys-platform-env.sh
 ```
 
 into the **Launch Script** edit field
  
 ![Alt Image Text](./images/lightsail-create-instance-3.png "Lightsail Homepage")
 
-Click on **Change SSH key pair** and leave the **Default** selected and then click on **Download** and save the file to a convenient location on your machine. Under **Choose your instance plan** select the size for your instance. Depending on what you later want to run inside your stack, you should choose an instance with at least **4GB** of RAM (of course the more docker containers you run, the more memory you will need).    
+Click on **Change SSH key pair** and leave the **Default** selected and then click on **Download** and save the file to a convenient location on your machine. Under **Choose your instance plan** click on the arrow on the right and select the **16 GB** instance.   
 
 Under **Identify your instance** enter **Ubuntu-Analytics-Platform** into the edit field. 
 
@@ -112,7 +109,7 @@ Click on the instance to navigate to the image details page. On the right you ca
 Next we have to configure the Firewall to allow traffic into the Lightsail instance. 
 
 Click on the **Networking** tab/link to navigate to the network settings and under **Firewall** click on **+ Add another**.
-We allow TCP traffic on ports 28000 - 28400 by selecting **Custom**, entering **28000 - 28400** into the **Port or Range** field and then click **Save**. 
+We allow TCP traffic on ports 28000 - 28200 by selecting **Custom**, entering **28000 - 28200** into the **Port range** field and then click **Save**. 
 
 ![Alt Image Text](./images/lightsail-image-networking-add-firewall-rule.png "Lightsail Homepage")
 
@@ -123,37 +120,9 @@ Navigate to the **Connect** tab and click **Connect using SSH** to open the cons
 tail -f /var/log/cloud-init-output.log --lines 1000
 ```
 
-The initialisation is finished when you see a line
+The initialisation is finished when you see the `Creating xxxxx .... done` lines after all the docker images have been downloaded, which takes a couple of minutes. 
 
-```bash
-Cloud-init v. 22.4.2-0ubuntu0~22.04.1 finished at Mon, 22 May 2023 10:07:43 +0000. Datasource DataSourceEc2Local.  Up 132.85 seconds
-```
-
-Check that `platys` has been install successfully by executing `platys -v`
-
-```bash
-ubuntu@ip-172-26-4-247:~$ platys -v
-Platys - Trivadis Platform in a Box - v 2.4.2
-https://github.com/trivadispf/platys
-Copyright (c) 2018-2020, Trivadis AG
-Usage:
-  platys [flags]
-  platys [command]
-
-Available Commands:
-  clean         Cleans the contents in the $PATH/container-volume folder
-  gen           Generates all the needed artifacts for the docker-based modern (data) platform  
-  help          Help about any command  
-  init          Initializes the current directory to be the root for the Modern (Data) Platform by creating an initial config file, if one does not already exists  
-  list_services List the services  
-  stacks        Lists the predefined stacks available for the init command  
-  version       Print the version number of platys
-
-Flags:
-  -h, --help      help for platys  
-  -v, --verbose   verbose outputUse "platys [command] --help" for more information about a command.
-  ubuntu@ip-172-26-4-247:~$
-```
+![Alt Image Text](./images/lightsail-create-instance-log-file.png "Lightsail Homepage")
 
 Optionally you can also SSH into the Lightsail instance using the **SSH key pair** you have downloaded above. For that open a terminal window (on Mac / Linux) or Putty (on Windows) and connect as ubuntu to the Public IP address of the instance.   
 
@@ -162,6 +131,16 @@ ssh -i LightsailDefaultKey-eu-central-1.pem ubuntu@18.196.124.212
 ```
 
 Your instance is now ready to use. Complete the post installation steps documented the [here](README.md).
+
+## Using the `platys`-ready environment
+ 
+Now you are ready to use the Platys environment. You can follow the [Getting Started with `platys` and the `modern-data-platform` stack](https://github.com/TrivadisPF/platys-modern-data-platform/blob/master/documentation/getting-started.md) to see how to create a `modern-data-platform` stack. 
+
+Or [click here](command-line-ref.md) to explore the full list of platys commands.
+
+## Create a Static IP
+
+You can also create a static IP and assign it to your instance so that the IP won't change in case you have to restart the VM.
 
 ## Stop an Instance
 
@@ -173,11 +152,15 @@ Click on **Stop** to confirm stopping the instance.
 
 ![Alt Image Text](./images/lightsail-stop-instance-confirm.png "Lightsail Homepage")
 
-A stopped instance will still incur charges, you have to delete the instance completely to stop charges. 
+A stopped instance will still incur charges, you have to terminate (delete) the instance completely to stop charges. 
 
-## Delete an Instance
+## Terminating an Instance
 
-t.b.d.
+To terminate the instance, navigate to the instance overview and click on the drop-down menu and select **Delete**. 
+
+![Alt Image Text](./images/lightsail-terminate-instance.png "Lightsail Homepage")
+
+Click on **Delete** to confirm terminating the instance. 
 
 ## Create a snapshot of an Instance
 
@@ -186,20 +169,4 @@ When an instance is stopped, you can create a snapshot, which you can keep, even
 ![Alt Image Text](./images/lightsail-image-create-snapshot.png "Lightsail Homepage")
 
 You can always recreate an instance based on a snapshot. 
-
-# De-provision the environment
-
-To stop the environment, execute the following command:
-
-```
-docker-compose stop
-```
-
-after that it can be re-started using `docker-compose start`.
-
-To stop and remove all running container, execute the following command:
-
-```
-docker-compose down
-```
 
