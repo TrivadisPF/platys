@@ -6,7 +6,7 @@
 [![](https://img.shields.io/static/v1?logo=slack&logoColor=959DA5&label=Slack&labelColor=333a41&message=join%20conversation&color=3AC358)](https://join.slack.com/t/platys/shared_invite/zt-gc31af0n-cLHnzSaBSqS~IsIMSK6SKg)
 
 # platys - Trivadis Platform in a Box
-Copyright (c) 2018-2020 Trivadis
+Copyright (c) 2018-2024 Trivadis
 
 ## What is `platys`?
 
