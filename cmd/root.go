@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/markbates/pkger"
@@ -64,13 +64,13 @@ func pullConfig() string {
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: Stack + ":" + Version,
 		Tty:   true,
-	}, nil, nil, containerName)
+	}, nil, nil, nil, containerName)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		panic(err)
 	}
 
@@ -83,7 +83,7 @@ func pullConfig() string {
 	case <-statusCh:
 	}
 
-	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true})
 	if err != nil {
 		panic(err)
 	}
@@ -118,20 +118,20 @@ func pullConfig() string {
 
 // extracts the provided file/folder from the docker image
 // file/folders are returned as a tar file
-func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
+func getFile(filePath string) (io.ReadCloser, container.PathStat, error) {
 
 	cli, ctx := initClient()
 
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image: Stack,
 		Tty:   true,
-	}, nil, nil, containerName)
+	}, nil, nil, nil, containerName)
 
 	if err != nil {
 		panic(err)
 	}
 
-	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		panic(err)
 	}
 
@@ -144,7 +144,7 @@ func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
 	case <-statusCh:
 	}
 
-	out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true})
 	if err != nil {
 		panic(err)
 	}
@@ -158,11 +158,11 @@ func getFile(filePath string) (io.ReadCloser, types.ContainerPathStat, error) {
 // stops and removes the provided container id
 func stopRemoveContainer(id string, cli *client.Client, ctx context.Context) {
 
-	err := cli.ContainerStop(context.Background(), id, nil)
+	err := cli.ContainerStop(context.Background(), id, container.StopOptions{})
 	if err != nil {
 		panic(err)
 	}
-	err = cli.ContainerRemove(ctx, id, types.ContainerRemoveOptions{
+	err = cli.ContainerRemove(ctx, id, container.RemoveOptions{
 		RemoveVolumes: false,
 		RemoveLinks:   false,
 		Force:         false,
@@ -181,7 +181,7 @@ func initClient() (*client.Client, context.Context) {
 		panic(err)
 	}
 
-	reader, err := cli.ImagePull(ctx, Stack+":"+Version, types.ImagePullOptions{})
+	reader, err := cli.ImagePull(ctx, Stack+":"+Version, image.PullOptions{})
 	if err != nil {
 		panic(err)
 	}

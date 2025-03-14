@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -60,58 +61,45 @@ By default 'config.yml' is used for the name of the config file, which is create
 			log.Fatal(err)
 		}
 
+		currentService := ""
 		if enableServices != "" { // services where passed as an argument
 
 			services := strings.Split(enableServices, ",") // separate service by coma
 			servicesYml := ymlConfig.Content[0].Content
 			updatedYml := make([]*yaml.Node, 0)
 			copied := 0
-			copyNext := false
 
-			for i, n := range servicesYml {
+			for i := 0; i < len(servicesYml)-1; i = i + 2 {
+				key := servicesYml[i]
+				value := servicesYml[i+1]
 
-				if copyNext {
-					if strings.Contains(servicesYml[i-1].Value, "_enable") { // change the value of the key only if it's a service (i.e don't do this for use timezone etc.)
-						n.Value = "true"
-					}
-
-					updatedYml = append(updatedYml, n)
-					copied++
-					copyNext = false
-					continue
+				if strings.Contains(key.Value, "_enable") { // services are suffixed with enabled
+					currentService = strings.Replace(key.Value, "_enable", "", 1)
 				}
 
-				if strings.Contains(n.Value, "platys") { // copy the platys keys
-					updatedYml = append(updatedYml, n)
-					copied++
-					copyNext = true // mark it so as the mapping values are copied during next iteration
-					continue
+				if strings.Contains(key.Value, "platys") {
+					updatedYml = append(updatedYml, key)
+					updatedYml = append(updatedYml, value)
+					copied = copied + 2
+
+				} else if strings.Contains(key.Value, "use_timezone") || strings.Contains(key.Value, "private_docker_repository_name") {
+					updatedYml = append(updatedYml, key)
+					updatedYml = append(updatedYml, value)
+					copied = copied + 2
+
+				} else if in_array(currentService, services) && !isServiceProperty(currentService, key) {
+					fmt.Println(fmt.Sprintf("Enabling service [%v]", currentService))
+					updatedYml = append(updatedYml, key)
+					value.Value = "true" // service was requested to be activated change the value to true before adding it
+					updatedYml = append(updatedYml, value)
+					copied = copied + 2
+				} else if isServiceProperty(currentService, key) && in_array(currentService, services) {
+					fmt.Println(fmt.Sprintf("grabbing service property for service [%v]", currentService))
+					updatedYml = append(updatedYml, key)
+					updatedYml = append(updatedYml, value)
+					copied = copied + 2
 				}
 
-				if strings.Contains(n.Value, "use_timezone") || strings.Contains(n.Value, "private_docker_repository_name") {
-					updatedYml = append(updatedYml, n)
-					copied++
-					copyNext = true
-					continue
-				}
-
-				if !strings.Contains(n.Value, "_enable") {
-					continue
-				}
-
-				service := strings.Replace(n.Value, "_enable", "", 1)
-
-				if in_array(service, services) {
-
-					fmt.Println(fmt.Sprintf("Enabling service %v", service))
-					updatedYml = append(updatedYml, n)
-					copied++
-					copyNext = true
-
-				} else {
-					fmt.Println(fmt.Sprintf("removing service %v", service))
-
-				}
 			}
 
 			updatedYml = updatedYml[:copied] //create a new slice by copying the updated one
@@ -155,6 +143,17 @@ By default 'config.yml' is used for the name of the config file, which is create
 		printBanner(configFile)
 
 	},
+}
+
+func isServiceProperty(service string, node *yaml.Node) bool {
+
+	//we ignore anything that has 'enable' string since this is related to activating services
+	if strings.Contains(node.Value, "_enable") {
+		return false
+	}
+	pattern := fmt.Sprintf(`^%s_[a-z0-9_]+$`, regexp.QuoteMeta(service))
+	re := regexp.MustCompile(pattern)
+	return re.MatchString(node.Value)
 }
 
 func addRootIndent(b []byte, n int) []byte {

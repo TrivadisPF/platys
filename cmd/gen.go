@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/spf13/cobra"
@@ -90,15 +89,15 @@ var genCmd = &cobra.Command{
 		for i, n := range services.Content[0].Content {
 
 			if n.Kind == yaml.ScalarNode {
-				if max, found := isLimited(n.Value); found {
+				if maxValue, found := isLimited(n.Value); found {
 					val, err := strconv.Atoi(services.Content[0].Content[i+1].Value)
 
 					if err != nil {
 						fmt.Println(fmt.Sprintf("Unable to parse value %v for key %v", val, services.Content[0].Content[i].Value))
 					}
 
-					if val > max {
-						panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than max value [%v])", val, services.Content[0].Content[i].Value, max))
+					if val > maxValue {
+						panic(fmt.Sprintf("Unable to generate config file since because the number of nodes configured for service [%v] -> [%v] is higher than maxValue value [%v])", val, services.Content[0].Content[i].Value, maxValue))
 					}
 
 				}
@@ -176,13 +175,13 @@ var genCmd = &cobra.Command{
 						ReadOnly: false,
 					},
 				},
-			}, nil, containerName)
+			}, nil, nil, containerName)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 			panic(err)
 		}
 
@@ -195,7 +194,7 @@ var genCmd = &cobra.Command{
 		case <-statusCh:
 		}
 
-		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+		out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -264,7 +263,7 @@ func printInfoIfNecessary(platys YAMLFile) {
 
 }
 
-//Checks wether the YAML file is for an older version of Platys
+// Checks wether the YAML file is for an older version of Platys
 func isOlderVersion(rootNode yaml.Node) bool {
 
 	platys := rootNode.Content[0].Content
@@ -289,7 +288,7 @@ func downloadRemoteFile(configUrl string) (string, error) {
 
 }
 
-//Downloads a remote config file to a local one
+// Downloads a remote config file to a local one
 func DownloadFile(url string) (string, error) {
 
 	// Get the data
@@ -305,7 +304,7 @@ func DownloadFile(url string) (string, error) {
 	}(resp.Body)
 
 	// Create the file
-	out, err := ioutil.TempFile("", "config*.yml")
+	out, err := os.CreateTemp("", "config*.yml")
 	if err != nil {
 		return "", err
 	}
