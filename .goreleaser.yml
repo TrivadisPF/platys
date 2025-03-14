@@ -1,6 +1,12 @@
+version: 2
+
 env:
-  - GO111MODULE=on
-  - GOPROXY=https://proxy.golang.org,direct
+  - GO111MODULE=on 
+
+gomod:
+  proxy: true
+
+report_sizes: true
 
 before:
   hooks:
@@ -21,8 +27,7 @@ builds:
       - arm64
       - aarch64
     goarm:
-      - 6
-      - 7
+      - "7"
     ignore:
       - goos: windows
         goarch: arm64
