@@ -23,19 +23,19 @@ Follow the instructions below for installing `platys` on a Mac systems.
 
 for Macs with Intel
 
-```
+```bash
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 for Macs with Apple Silicon (M1)
 
-```
+```bash
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
 
-  ```
+  ```bash
 cd /tmp
 tar zvxf /tmp/platys.tar.gz 
 sudo mv platys /usr/local/bin/
@@ -44,7 +44,7 @@ sudo rm /tmp/platys.tar.gz
 
 3. Use the `version` command to check that `platys` has been installed successfully.
 
-  ```
+  ```bash
 $ platys version
 Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
@@ -59,19 +59,19 @@ Follow the instructions below for installing `platys` on a Linux systems.
 
 if on Intel
 
-  ```
+  ```bash
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 if on Arm64
 
-  ```
+  ```bash
 sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
 
-  ```
+  ```bash
 cd /tmp
 tar zvxf /tmp/platys.tar.gz 
 sudo mv platys /usr/local/bin/
@@ -81,7 +81,7 @@ sudo rm /tmp/platys.tar.gz
 
 3. Use the `version` command to check that `platys`  has been installed successfully.
 
-  ```
+  ```bash
 $ platys version
 Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
@@ -121,13 +121,29 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
 4. Restart the PowerShell terminal andu use the `version` command to check that `platys` has been installed successfully.
 
-  ```
+  ```bash
 $ platys version
 Platys - Trivadis Platform in a Box - v 2.4.3
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
 
+### Docker
+
+1. Pull the image once from Docker Hub
+
+	```bash
+docker pull trivadis/platys:latest
+```
+
+2. Run the image using the following command (with version argument)
+
+	```bash
+$ docker run -it --rm --name=platys --privileged -v /var/run/docker.sock:/var/run/docker.sock trivadis/platys:latest version
+Platys - Trivadis Platform in a Box - v 2.4.3
+https://github.com/trivadispf/platys
+Copyright (c) 2018-2020, Trivadis AG
+``` 
    
 ## Uninstallation
 

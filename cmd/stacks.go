@@ -3,13 +3,12 @@ package cmd
 import (
 	"fmt"
 	"github.com/docker/distribution/context"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/spf13/cobra"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 )
@@ -34,7 +33,7 @@ var stacksCmd = &cobra.Command{
 			panic(err)
 		}
 
-		reader, err := cli.ImagePull(ctx, Stack, types.ImagePullOptions{})
+		reader, err := cli.ImagePull(ctx, Stack, image.PullOptions{})
 		if err != nil {
 			panic(err)
 		}
@@ -44,7 +43,7 @@ var stacksCmd = &cobra.Command{
 			Image: Stack,
 			Tty:   true,
 			Cmd:   []string{"ls", "/opt/mdps-gen/seed-stacks"},
-		}, nil, nil, containerName)
+		}, nil, nil, nil, containerName)
 
 		defer stopRemoveContainer(resp.ID, cli, ctx)
 
@@ -52,7 +51,7 @@ var stacksCmd = &cobra.Command{
 			panic(err)
 		}
 
-		if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		if err := cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 			panic(err)
 		}
 
@@ -65,13 +64,13 @@ var stacksCmd = &cobra.Command{
 		case <-statusCh:
 		}
 
-		out, err := cli.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+		out, err := cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true})
 		if err != nil {
 			panic(err)
 		}
 
 		stdcopy.StdCopy(os.Stdout, os.Stderr, out)
-		content, _ := ioutil.ReadAll(out)
+		content, _ := io.ReadAll(out)
 
 		//TODO implement regex filtering of the logs to match seekds
 		fmt.Println("Available stacks :")

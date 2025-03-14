@@ -1,4 +1,4 @@
-# Provision of a `platys`-ready environment 
+# Provisioning of a `platys`-ready environment 
 
 A `platys`-ready environment can be provisioned to various environments. Find the options and description here:
 
