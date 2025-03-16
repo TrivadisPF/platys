@@ -131,3 +131,4 @@ dmypy.json
 vagrant/.vagrant/**
 /platys
 .DS_Store
+/config.yml
