@@ -1,8 +1,15 @@
 package main
 
-import "trivadis.com/platys/cmd"
+import (
+	"embed"
+	"trivadis.com/platys/cmd"
+)
 
-//go:generate go run cmd/init_banner.txt
+//go:embed assets
+var Assets embed.FS
+
 func main() {
+	//inject assets into the global variable in cmd package as embed does not work with relative paths
+	cmd.Assets = Assets
 	cmd.Execute()
 }

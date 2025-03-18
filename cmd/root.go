@@ -4,13 +4,15 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"embed"
+	_ "embed"
 	"fmt"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"github.com/markbates/pkger"
 	"github.com/spf13/cobra"
+
 	"io"
 	"log"
 	"os"
@@ -20,6 +22,8 @@ import (
 var Stack string
 var Version string
 var Verbose bool
+
+var Assets embed.FS
 
 const containerName = "platys"
 const configFilePath = "/opt/mdps-gen/vars/config.yml"
@@ -196,21 +200,13 @@ func initClient() (*client.Client, context.Context) {
 // prints the help banner
 func printBanner(path string) {
 
-	f, err := pkger.Open("/assets/init_banner.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+	f, err := Assets.ReadFile("assets/init_banner.txt")
 
-	info, err := f.Stat()
 	if err != nil {
 		panic(err)
 	}
 
-	file := make([]byte, info.Size())
-	_, err = f.Read(file)
-
-	fmt.Println(fmt.Sprintf(string(file), path))
+	fmt.Println(fmt.Sprintf(string(f), path))
 }
 
 func in_array(val string, list []string) bool {
