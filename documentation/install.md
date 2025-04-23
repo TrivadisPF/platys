@@ -24,13 +24,13 @@ Follow the instructions below for installing `platys` on a Mac systems.
 for Macs with Intel
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 for Macs with Apple Silicon (M1)
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -46,7 +46,7 @@ sudo rm /tmp/platys.tar.gz
 
   ```bash
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.3
+Platys - Trivadis Platform in a Box - v 2.4.4
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -60,13 +60,13 @@ Follow the instructions below for installing `platys` on a Linux systems.
 if on Intel
 
   ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 if on Arm64
 
   ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -83,7 +83,7 @@ sudo rm /tmp/platys.tar.gz
 
   ```bash
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.3
+Platys - Trivadis Platform in a Box - v 2.4.4
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -95,7 +95,7 @@ Follow the instructions below for installing `platys` on a Windows system.
 1. From a Windows Powershell, run this command to download the current stable release of the `platys`:
 
   ```
-Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.3/platys_2.4.3_windows_x86_64.zip" -OutFile platys.zip
+Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_windows_x86_64.zip" -OutFile platys.zip
 ```
 
 2. Expand the zip archive into `ProgramFiles\Platys` and remove the zip file:
@@ -123,7 +123,7 @@ Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Co
 
   ```bash
 $ platys version
-Platys - Trivadis Platform in a Box - v 2.4.3
+Platys - Trivadis Platform in a Box - v 2.4.4
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ```
@@ -140,7 +140,7 @@ docker pull trivadis/platys:latest
 
 	```bash
 $ docker run -it --rm --name=platys --privileged -v /var/run/docker.sock:/var/run/docker.sock trivadis/platys:latest version
-Platys - Trivadis Platform in a Box - v 2.4.3
+Platys - Trivadis Platform in a Box - v 2.4.4
 https://github.com/trivadispf/platys
 Copyright (c) 2018-2020, Trivadis AG
 ``` 
