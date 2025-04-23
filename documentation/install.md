@@ -24,13 +24,13 @@ Follow the instructions below for installing `platys` on a Mac systems.
 for Macs with Intel
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Darwin_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 for Macs with Apple Silicon (M1)
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Darwin_arm64.tar.gz " -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -60,13 +60,13 @@ Follow the instructions below for installing `platys` on a Linux systems.
 if on Intel
 
   ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Linux_x86_64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 if on Arm64
 
   ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_linux_arm64.tar.gz" -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Linux_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
@@ -95,7 +95,7 @@ Follow the instructions below for installing `platys` on a Windows system.
 1. From a Windows Powershell, run this command to download the current stable release of the `platys`:
 
   ```
-Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_2.4.4_windows_x86_64.zip" -OutFile platys.zip
+Invoke-WebRequest "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Windows_x86_64.zip" -OutFile platys.zip
 ```
 
 2. Expand the zip archive into `ProgramFiles\Platys` and remove the zip file:
