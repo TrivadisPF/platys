@@ -30,7 +30,7 @@ sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platy
 for Macs with Apple Silicon (M1)
 
 ```bash
-sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Darwin_arm64.tar.gz " -o /tmp/platys.tar.gz
+sudo curl -L "https://github.com/TrivadisPF/platys/releases/download/2.4.4/platys_Darwin_arm64.tar.gz" -o /tmp/platys.tar.gz
 ```
 
 2. Untar and move it to `/usr/local/bin`
