@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -67,7 +66,7 @@ var genCmd = &cobra.Command{
 			log.Fatal("Unable to run command as configFile is null")
 		}
 
-		ymlContent, err := ioutil.ReadFile(configFile)
+		ymlContent, err := os.ReadFile(configFile)
 
 		if err != nil {
 			log.Fatal(fmt.Sprintf("Unable to continue as the file [%v] cannot be found", configFile))
@@ -140,7 +139,8 @@ var genCmd = &cobra.Command{
 			containerConfig = container.Config{
 				Image: platys.Platys.PlatformStack + ":" + platys.Platys.PlatformStackVersion,
 				Tty:   true,
-				Env:   env}
+				Env:   env,
+			}
 
 		} else {
 			containerConfig = container.Config{
@@ -256,7 +256,6 @@ func isPlatysValid(platys YAMLFile, ymlConfig yaml.Node) {
 
 func printInfoIfNecessary(platys YAMLFile) {
 	if Verbose {
-
 		log.Printf("using configuration file [%v] with values:  platform-name: [%v], platform-stack: [%v] platform-stack-version: [%v], structure [%v]",
 			configFile, platys.Platys.PlatformName, platys.Platys.PlatformStack, platys.Platys.PlatformStackVersion, platys.Platys.Structure)
 	}
