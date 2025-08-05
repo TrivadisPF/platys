@@ -10,13 +10,11 @@ import (
 	"github.com/spf13/cobra"
 	"io"
 	"os"
-	"regexp"
 )
-
-var seedRegex = regexp.MustCompile(`(?P<seed>[A-Z0-9_-]+)_enable`)
 
 func init() {
 	rootCmd.AddCommand(stacksCmd)
+	stacksCmd.Flags().StringVarP(&Version, "stack-version", "w", "latest", "version of the stack to employ")
 
 }
 
@@ -33,14 +31,14 @@ var stacksCmd = &cobra.Command{
 			panic(err)
 		}
 
-		reader, err := cli.ImagePull(ctx, Stack, image.PullOptions{})
+		reader, err := cli.ImagePull(ctx, Stack+":"+Version, image.PullOptions{})
 		if err != nil {
 			panic(err)
 		}
 		io.Copy(os.Stdout, reader)
 
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
-			Image: Stack,
+			Image: Stack + ":" + Version,
 			Tty:   true,
 			Cmd:   []string{"ls", "/opt/mdps-gen/seed-stacks"},
 		}, nil, nil, nil, containerName)

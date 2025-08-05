@@ -132,3 +132,4 @@ vagrant/.vagrant/**
 /platys
 .DS_Store
 /config.yml
+/dist/

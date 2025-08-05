@@ -70,11 +70,12 @@ By default 'config.yml' is used for the name of the config file, which is create
 			copied := 0
 
 			for i := 0; i < len(servicesYml)-1; i = i + 2 {
+				// in go YAML each key/value is a different node
 				key := servicesYml[i]
 				value := servicesYml[i+1]
 
-				if strings.Contains(key.Value, "_enable") { // services are suffixed with enabled
-					currentService = strings.Replace(key.Value, "_enable", "", 1)
+				if isService, service := isService(key); isService {
+					currentService = service
 				}
 
 				if strings.Contains(key.Value, "platys") {
@@ -94,7 +95,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 					updatedYml = append(updatedYml, value)
 					copied = copied + 2
 				} else if isServiceProperty(currentService, key) && in_array(currentService, services) {
-					fmt.Println(fmt.Sprintf("grabbing service property for service [%v]", currentService))
+					fmt.Println(fmt.Sprintf("grabbing service property [%v] for service [%v]", key.Value, currentService))
 					updatedYml = append(updatedYml, key)
 					updatedYml = append(updatedYml, value)
 					copied = copied + 2
@@ -113,7 +114,7 @@ By default 'config.yml' is used for the name of the config file, which is create
 		if len(structure) > 0 {
 
 			if structure != "subfolder" && structure != "flat" {
-				log.Fatal(fmt.Sprintf("Invalid value for  [structure] received [%v]. Accepted values are [flat|subfolder] "), structure)
+				log.Fatal(fmt.Sprintf("Invalid value for  [structure] received [%v]. Accepted values are [flat|subfolder] ", structure))
 			}
 			updateConfig("structure", structure, &ymlConfig)
 		}
@@ -145,10 +146,21 @@ By default 'config.yml' is used for the name of the config file, which is create
 	},
 }
 
+func isService(node *yaml.Node) (bool, string) {
+	serviceRegexp := regexp.MustCompile(SERVICE_REGEX)
+	if matches := serviceRegexp.FindStringSubmatch(node.Value); matches != nil {
+		return true, matches[1]
+	} else {
+		return false, ""
+	}
+}
+
 func isServiceProperty(service string, node *yaml.Node) bool {
 
+	servicePattern := regexp.MustCompile(SERVICE_REGEX)
+
 	//we ignore anything that has 'enable' string since this is related to activating services
-	if strings.Contains(node.Value, "_enable") {
+	if servicePattern.MatchString(node.Value) {
 		return false
 	}
 	pattern := fmt.Sprintf(`^%s_[a-z0-9_]+$`, regexp.QuoteMeta(service))
