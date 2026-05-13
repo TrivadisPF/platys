@@ -1,22 +1,6 @@
-# platys — Rust Port
+# platys
 
-This is a faithful translation of [TrivadisPF/platys](https://github.com/TrivadisPF/platys) from Go to idiomatic Rust.
 
-## Go → Rust mapping
-
-| Go concept | Rust equivalent |
-|---|---|
-| `cobra` CLI framework | `clap` with `derive` feature |
-| `docker/docker` SDK | `bollard` async Docker SDK |
-| `gopkg.in/yaml.v3` | `serde_yaml` |
-| goroutines / channels | `tokio` async/await |
-| `embed.FS` | `include_str!` macro |
-| `panic(err)` | `anyhow::bail!` / `?` operator |
-| `log.Fatal(...)` | `anyhow::bail!` |
-| `io.Copy` stream | `futures_util::StreamExt` |
-| `tar.NewReader` | `tar::Archive` |
-| `http.Get` (blocking) | `reqwest::blocking::get` |
-| `os/user.Current()` | `libc::getuid/getgid` (Unix) |
 
 ## Project structure
 
@@ -50,7 +34,7 @@ Requires Docker to be running (same as the Go original).
 ## Dependencies
 
 ```toml
-clap        = "4"          # CLI parsing (cobra replacement)
+clap        = "4"          # CLI parsing 
 bollard     = "0.17"       # Docker API
 tokio       = "1"          # async runtime
 serde       = "1"          # serialisation
@@ -66,19 +50,4 @@ tempfile    = "3"          # temp files for remote configs
 On Linux/macOS, add `libc = "0.2"` to `Cargo.toml` if you need the UID/GID
 helpers in `gen.rs` (used to run the container as the current user).
 
-## Notable translation decisions
 
-- **Error handling**: Go's `panic(err)` / `log.Fatal(err)` become `bail!` or `?`
-  propagated up through `anyhow::Result`. All errors surface cleanly at `main`.
-- **Async**: The Go code uses the Docker SDK synchronously in goroutines.
-  The Rust port uses `bollard`'s native async API with a `tokio` runtime.
-- **Embed**: Go's `//go:embed assets` becomes Rust's `include_str!` macro,
-  which embeds `assets/init_banner.txt` at compile time.
-- **YAML node walking**: Go's `gopkg.in/yaml.v3` exposes raw `*yaml.Node` trees
-  for surgical editing. `serde_yaml` uses a `Value` enum which serves the same
-  purpose in `init.rs`.
-- **`stacks` command**: The Go version has a TODO comment about regex filtering
-  the container logs. The Rust port implements that TODO using `regex`.
-- **Windows support**: The `gen` command skips the `User` field on Windows,
-  matching the Go `runtime.GOOS == "windows"` branch.
-EOF
