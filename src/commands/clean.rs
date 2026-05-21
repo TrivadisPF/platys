@@ -14,9 +14,9 @@ pub struct CleanArgs {
     pub base_folder: String,
 }
 
-pub async fn run(args: CleanArgs, _verbose: bool) -> Result<()> {
+pub async fn run(args: CleanArgs) -> Result<()> {
     let folder = format!("{}/container-volume", args.base_folder);
-    println!("About to delete content of folder: {folder}");
+    log::info!("Deleting content of folder: {folder}");
 
     // Remove each entry inside the container-volume folder
     let dir = fs::read_dir(&folder)
@@ -29,7 +29,7 @@ pub async fn run(args: CleanArgs, _verbose: bool) -> Result<()> {
     }
 
     // Restore default structure from the Docker image
-    println!("About to revert to default structure on folder [{folder}]");
+    log::info!("About to revert to default structure on folder [{folder}]");
 
     let tar_bytes = get_file(
         "trivadis/platys-modern-data-platform", // stack is implicit here, same as Go

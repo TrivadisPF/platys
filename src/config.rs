@@ -57,7 +57,7 @@ pub fn is_service_property(service: &str, key: &str) -> bool {
 
 // ── Indentation helper ────────────────────────────────────────────────────────
 
-/// Mirrors Go's `addRootIndent`: prepends n spaces to every line.
+
 pub fn add_root_indent(yaml: &str, n: usize) -> String {
     let prefix = " ".repeat(n);
     yaml.lines()

@@ -29,7 +29,7 @@ pub struct GenArgs {
     pub config_file: String,
 }
 
-pub async fn run(mut args: GenArgs, verbose: bool) -> Result<()> {
+pub async fn run(mut args: GenArgs) -> Result<()> {
     // ── Resolve config file ──────────────────────────────────────────────
     if !args.config_url.is_empty() {
         log::info!(
@@ -75,16 +75,13 @@ pub async fn run(mut args: GenArgs, verbose: bool) -> Result<()> {
         }
     }
 
-    if verbose {
-        eprintln!(
-            "Using config [{}]: platform-name={}, stack={}, stack-version={}, structure={}",
+    log::debug!("Using config [{}]: platform-name={}, stack={}, stack-version={}, structure={}",
             args.config_file,
             platys.platys.platform_name,
             platys.platys.platform_stack,
             platys.platys.platform_stack_version,
-            platys.platys.structure,
-        );
-    }
+            platys.platys.structure);
+
 
     // ── Determine output destination ─────────────────────────────────────
     let current_dir = std::env::current_dir().context("Cannot determine current directory")?;
@@ -97,13 +94,15 @@ pub async fn run(mut args: GenArgs, verbose: bool) -> Result<()> {
         eprintln!("Generating stack on [{:?}]", destination);
     }
 
+    //when verbose is passed to the main class it set logging level to debug  @see main.rs
+    let verbose = log::max_level() >= log::LevelFilter::Debug;
+
+
     // ── Build environment for the container ──────────────────────────────
     let mut env: Vec<String> = Vec::new();
     env.push(format!("VERBOSE={}", if verbose { 1 } else { 0 }));
-    env.push(format!(
-        "DEL_EMPTY_LINES={}",
-        if args.del_empty_lines { 1 } else { 0 }
-    ));
+    //casting bool to u8 will give either 1 or 0
+    env.push(format!("DEL_EMPTY_LINES={}", args.del_empty_lines as u8));
 
     // ── Run the generator container ──────────────────────────────────────
     let stack = &platys.platys.platform_stack;
@@ -115,7 +114,7 @@ pub async fn run(mut args: GenArgs, verbose: bool) -> Result<()> {
         .canonicalize()
         .context("Failed to resolve config file path")?;
 
-    // On Windows we skip setting the User field (mirrors Go behaviour)
+    // On Windows we skip setting the User field
     let user = if cfg!(target_os = "windows") {
         None
     } else {

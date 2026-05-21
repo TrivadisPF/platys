@@ -1,5 +1,5 @@
-use crate::cli::version_info;
+use crate::cli::VERSION_INFO;
 
 pub fn run() {
-    println!("{}", version_info());
+    println!("{VERSION_INFO}");
 }

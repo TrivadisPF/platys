@@ -2,7 +2,6 @@ use anyhow::{bail, Context, Result};
 use clap::Args;
 use serde_yaml::Value;
 use std::fs;
-
 use crate::cli::DEFAULT_STACK;
 use crate::config::{add_root_indent, is_service_key, is_service_property, print_banner};
 use crate::docker::pull_config;
@@ -46,8 +45,8 @@ pub struct InitArgs {
     pub stack_version: String,
 }
 
-pub async fn run(args: InitArgs, _verbose: bool) -> Result<()> {
-    println!("Running using config file [{}]", args.config_file);
+pub async fn run(args: InitArgs) -> Result<()> {
+    log::info!("Running using config file [{}]", args.config_file);
 
     // Guard against overwriting existing config
     if fs::metadata(&args.config_file).is_ok() && !args.force {
@@ -133,11 +132,11 @@ fn filter_and_enable_services(root: &mut Value, services: &[&str]) -> Result<()>
         } else if services.contains(&current_service.as_str()) {
             if !is_service_property(&current_service, key_str) {
                 // This is the `_enable` key — flip it on
-                println!("Enabling service [{}]", current_service);
+                log::info!("Enabling service [{}]", current_service);
                 value = Value::Bool(true);
                 true
             } else {
-                println!(
+                log::info!(
                     "Grabbing service property [{}] for service [{}]",
                     key_str, current_service
                 );

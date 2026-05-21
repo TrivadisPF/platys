@@ -21,7 +21,7 @@ pub async fn init_client(stack: &str, version: &str) -> Result<Docker> {
         Docker::connect_with_local_defaults().context("Failed to connect to Docker daemon")?;
 
     let image_ref = format!("{stack}:{version}");
-    println!("Pulling image {image_ref} ...");
+    log::info!("Pulling image {image_ref} ...");
 
     let mut pull_stream = docker.create_image(
         Some(CreateImageOptions {

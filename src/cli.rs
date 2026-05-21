@@ -1,26 +1,26 @@
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
-use crate::commands::{init, generate, clean, version, list_services, stacks};
+use crate::commands::{clean, generate, init, list_services, stacks, version};
 
-pub const VERSION: &str = "3.0.0";
 pub const DEFAULT_STACK: &str = "trivadis/platys-modern-data-platform";
 
-pub fn version_info() -> String {
-    format!(
-        "Platys - Trivadis Platform in a Box - v {VERSION}\n\
-         https://github.com/trivadispf/platys\n\
-         Copyright (c) 2018-2020, Trivadis AG"
-    )
-}
+pub const VERSION_INFO: &str = concat!(
+    "Platys - Trivadis Platform in a Box - v ",
+    env!("CARGO_PKG_VERSION"),
+    "\nhttps://github.com/trivadispf/platys\n",
+    "Copyright (c) 2018-2026, Trivadis AG",
+);
+
 
 /// Platys platform generator
 #[derive(Parser)]
 #[command(
     name = "platys",
     about = "Platys platform generator",
-    long_about = version_info(),
-    version = VERSION,
+    long_about = VERSION_INFO,
+    version,
+    arg_required_else_help = true,
 )]
 pub struct Cli {
     /// Verbose output
@@ -28,7 +28,7 @@ pub struct Cli {
     pub verbose: bool,
 
     #[command(subcommand)]
-    pub command: Option<Commands>,
+    pub command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -47,7 +47,6 @@ pub enum Commands {
     Clean(clean::CleanArgs),
 
     /// List the services contained in the given version of the platys tool
-    #[command(name = "list_services")]
     ListServices(list_services::ListServicesArgs),
 
     /// Lists the predefined stacks available for the init command
@@ -57,22 +56,15 @@ pub enum Commands {
 impl Cli {
     pub async fn run(self) -> Result<()> {
         match self.command {
-            None => {
-                // Print help when no subcommand given (mirrors Go behaviour)
-                use clap::CommandFactory;
-                Cli::command().print_help()?;
-                println!();
-                Ok(())
-            }
-            Some(Commands::Version) => {
+            Commands::Version => {
                 version::run();
                 Ok(())
             }
-            Some(Commands::Init(args)) => init::run(args, self.verbose).await,
-            Some(Commands::Gen(args)) => generate::run(args, self.verbose).await,
-            Some(Commands::Clean(args)) => clean::run(args, self.verbose).await,
-            Some(Commands::ListServices(args)) => list_services::run(args).await,
-            Some(Commands::Stacks(args)) => stacks::run(args).await,
+            Commands::Init(args) => init::run(args).await,
+            Commands::Gen(args) => generate::run(args).await,
+            Commands::Clean(args) => clean::run(args).await,
+            Commands::ListServices(args) => list_services::run(args).await,
+            Commands::Stacks(args) => stacks::run(args).await,
         }
     }
 }
