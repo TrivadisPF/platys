@@ -1118,6 +1118,7 @@ dependencies = [
  "clap",
  "env_logger",
  "futures-util",
+ "indexmap 2.14.0",
  "libc",
  "log",
  "regex",

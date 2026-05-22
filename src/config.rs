@@ -1,7 +1,8 @@
-use anyhow::{ bail, Context, Result};
+use anyhow::{Context, Result, bail};
+use indexmap::IndexMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
+use serde_yaml::Value;
 // ── Regex for service key detection ──────────────────────────────────────────
 
 pub const SERVICE_REGEX: &str = r"^([A-Z0-9]+(?:_[A-Z0-9]+)*)_enable$";
@@ -56,7 +57,6 @@ pub fn is_service_property(service: &str, key: &str) -> bool {
 }
 
 // ── Indentation helper ────────────────────────────────────────────────────────
-
 
 pub fn add_root_indent(yaml: &str, n: usize) -> String {
     let prefix = " ".repeat(n);
@@ -126,8 +126,7 @@ pub fn node_limit(name: &str) -> Option<u32> {
 // ── Remote file download ──────────────────────────────────────────────────────
 
 pub fn download_remote_file(url: &str) -> Result<std::path::PathBuf> {
-    let resp = reqwest::blocking::get(url)
-        .with_context(|| format!("Failed to GET {url}"))?;
+    let resp = reqwest::blocking::get(url).with_context(|| format!("Failed to GET {url}"))?;
 
     let mut tmp = tempfile::Builder::new()
         .prefix("config")
@@ -149,4 +148,113 @@ pub fn print_banner(path: &str) {
     // (mirrors Go's embed.FS usage)
     const BANNER: &str = include_str!("../assets/init_banner.txt");
     println!("{}", BANNER.replace("{}", path));
+}
+
+#[derive(Debug, Default)]
+pub struct ParsedConfig {
+    pub platys: PlatysSection,
+    pub globals: IndexMap<String, Value>,
+    pub services: IndexMap<String, Service>,
+}
+
+#[derive(Debug, Default)]
+pub struct Service {
+    pub enabled: bool,
+    pub properties: IndexMap<String, Value>,
+}
+
+fn is_service_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_')
+}
+
+fn is_property_name(s: &str) -> bool {
+    !s.is_empty()
+        && s.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+}
+
+pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
+    let root: serde_yaml::Mapping =
+        serde_yaml::from_str(raw).context("Failed to parse YAML file")?;
+    let mut cfg = ParsedConfig::default();
+    let mut current_service: Option<String> = None;
+
+    for (k, v) in root {
+        let key = match k.as_str() {
+            Some(k) => k.to_string(),
+            None => continue,
+        };
+
+        //handle platys section
+        if key == "platys" {
+            cfg.platys = serde_yaml::from_value(v).context("Failed to parse [platys] section")?;
+            continue;
+        }
+
+        //handle services
+        if let Some(svc) = key.strip_suffix("_enable") {
+            if is_service_name(svc) {
+                let enabled = v.as_bool().unwrap_or(false);
+                let entry = cfg.services.entry(svc.to_string()).or_default();
+                entry.enabled = enabled;
+                current_service = Some(svc.to_string()); //keep track of current service
+                continue;
+            }
+        }
+
+        // handle service properties (if we have a current service)
+        if let Some(svc) = &current_service {
+            if let Some(property_name) = key
+                .strip_suffix(svc.as_str())
+                .and_then(|s| s.strip_suffix('_'))
+            {
+                if is_property_name(property_name) {
+                    cfg.services
+                        .get_mut(svc)
+                        .unwrap()
+                        .properties
+                        .insert(property_name.to_string(), v);
+                    continue;
+                }
+            }
+        }
+        cfg.globals.insert(key, v); // not platys, service or property section, fallback into globals
+    }
+
+    Ok(cfg)
+}
+
+pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
+    let mut root = serde_yaml::Mapping::new();
+
+    // create platys section
+    root.insert(
+        Value::String("platys".to_string()),
+        serde_yaml::to_value(&cfg.platys).context("Failed to serialize platys")?,
+    );
+
+    // create globals in the order they were parsed
+    for (k, v) in &cfg.globals {
+        root.insert(Value::String(k.clone()), v.clone());
+    }
+
+    //create services
+    for (svc_name, svc) in &cfg.services {
+        root.insert(
+            Value::String(format!("{svc_name}_enable")),
+            Value::Bool(svc.enabled),
+        );
+
+        //append service's properties
+        for (property, value) in &svc.properties {
+            root.insert(
+                Value::String(format!("{svc_name}_{property}")),
+                value.clone(),
+            );
+        }
+    }
+
+    serde_yaml::to_string(&root).context("Failed to serialize config")
 }
