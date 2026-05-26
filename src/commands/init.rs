@@ -1,10 +1,13 @@
-use anyhow::{bail, Context, Result};
-use clap::Args;
-use serde_yaml::Value;
-use std::fs;
 use crate::cli::DEFAULT_STACK;
-use crate::config::{add_root_indent, is_service_key, is_service_property, print_banner};
+use crate::config::{
+    add_root_indent, parse_config, print_banner,
+    serialize_config,
+};
 use crate::docker::pull_config;
+use anyhow::{Context, Result, bail};
+use clap::Args;
+
+use std::fs;
 
 #[derive(Args, Debug)]
 pub struct InitArgs {
@@ -59,22 +62,30 @@ pub async fn run(args: InitArgs) -> Result<()> {
     // Pull the template config.yml from the Docker image
     let raw_config = pull_config(&args.stack, &args.stack_version).await?;
 
-    // Parse into a generic YAML value so we can surgically edit it
-    let mut root: Value = serde_yaml::from_str(&raw_config)
-        .context("Failed to parse config from Docker image")?;
+    //parse into config struct
+    let mut config = parse_config(&raw_config)?;
 
     // ── Enable requested services ────────────────────────────────────────
     if !args.enable_services.is_empty() {
-        let services: Vec<&str> = args.enable_services.split(',').collect();
-        filter_and_enable_services(&mut root, &services)?;
+        let requested: Vec<&str> = args.enable_services.split(',').collect();
+
+        //keep only the services requested by the user
+        config
+            .services
+            .retain(|name, _| requested.contains(&name.as_str()));
+
+        //enable de services requested by user
+        for svc in config.services.values_mut() {
+            svc.enabled = true
+        }
     }
 
-    // ── Set platform-name ────────────────────────────────────────────────
+    // ── override platform-name if empty ────────────────────────────────────────────────
     if !args.platform_name.is_empty() {
-        update_platys_key(&mut root, "platform-name", &args.platform_name);
+        config.platys.platform_name = args.platform_name.clone();
     }
 
-    // ── Set structure ────────────────────────────────────────────────────
+    // ── override structure ────────────────────────────────────────────────────
     if !args.structure.is_empty() {
         if args.structure != "flat" && args.structure != "subfolder" {
             bail!(
@@ -82,94 +93,13 @@ pub async fn run(args: InitArgs) -> Result<()> {
                 args.structure
             );
         }
-        update_platys_key(&mut root, "structure", &args.structure);
+        config.platys.structure = args.structure.clone();
     }
 
-    // ── Serialize and write ──────────────────────────────────────────────
-    let yaml_str = serde_yaml::to_string(&root).context("Failed to serialise config")?;
+    let yaml_str = serialize_config(&config)?;
     let indented = add_root_indent(&yaml_str, 6);
-
     fs::write(&args.config_file, indented)
-        .with_context(|| format!("Failed to write {}", args.config_file))?;
-
+        .with_context(|| format!("failed to write {}", args.config_file))?;
     print_banner(&args.config_file);
     Ok(())
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/// Walks the top-level YAML mapping and keeps only:
-///  - keys containing "platys"
-///  - keys containing "use_timezone" or "private_docker_repository_name"
-///  - the `_enable` key + all property keys for any requested service
-fn filter_and_enable_services(root: &mut Value, services: &[&str]) -> Result<()> {
-    let mapping = root
-        .as_mapping_mut()
-        .context("Expected top-level YAML mapping")?;
-
-    let mut current_service = String::new();
-    let mut to_keep: Vec<(Value, Value)> = Vec::new();
-
-    let pairs: Vec<(Value, Value)> = mapping
-        .iter()
-        .map(|(k, v)| (k.clone(), v.clone()))
-        .collect();
-
-    for (key, mut value) in pairs {
-        let key_str = key.as_str().unwrap_or("");
-
-        // Track which service we're currently inside
-        let (is_svc_enable, svc_name) = is_service_key(key_str);
-        if is_svc_enable {
-            current_service = svc_name.clone();
-        }
-
-        let keep = if key_str.contains("platys")
-            || key_str.contains("use_timezone")
-            || key_str.contains("private_docker_repository_name")
-        {
-            true
-        } else if services.contains(&current_service.as_str()) {
-            if !is_service_property(&current_service, key_str) {
-                // This is the `_enable` key — flip it on
-                log::info!("Enabling service [{}]", current_service);
-                value = Value::Bool(true);
-                true
-            } else {
-                log::info!(
-                    "Grabbing service property [{}] for service [{}]",
-                    key_str, current_service
-                );
-                true
-            }
-        } else {
-            false
-        };
-
-        if keep {
-            to_keep.push((key, value));
-        }
-    }
-
-    // Replace the mapping content with only the kept pairs
-    *mapping = serde_yaml::Mapping::new();
-    for (k, v) in to_keep {
-        mapping.insert(k, v);
-    }
-
-    Ok(())
-}
-
-/// Updates a key inside the nested `platys:` section of the config.
-fn update_platys_key(root: &mut Value, name: &str, value: &str) {
-    if let Some(mapping) = root.as_mapping_mut() {
-        if let Some(platys_val) = mapping.get_mut("platys") {
-            if let Some(inner) = platys_val.as_mapping_mut() {
-                inner.insert(
-                    Value::String(name.to_string()),
-                    Value::String(value.to_string()),
-                );
-            }
-        }
-    }
 }

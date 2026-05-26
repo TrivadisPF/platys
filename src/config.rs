@@ -39,13 +39,17 @@ pub fn is_service_property(service: &str, key: &str) -> bool {
 
 // ── Indentation helper ────────────────────────────────────────────────────────
 
+
+//Indentation is needed as this file actually is nerged to an existing one on which the platys
+// info needs to be indented
 pub fn add_root_indent(yaml: &str, n: usize) -> String {
-    let prefix = " ".repeat(n);
-    yaml.lines()
-        .map(|l| format!("{prefix}{l}"))
-        .collect::<Vec<_>>()
-        .join("\n")
-        + "\n"
+    let mut out = String::with_capacity(yaml.len() + yaml.lines().count() * n + 1);
+    for line in yaml.lines() {
+        for _ in 0..n { out.push(' '); }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
@@ -338,5 +342,13 @@ mod tests{
         assert!(&reparsed_cfg.services["KAFKA"].enabled);
         assert!(!&reparsed_cfg.services["ZOOKEEPER"].enabled);
         assert_eq!(&reparsed_cfg.services["KAFKA"].properties.len(), &cfg.services["KAFKA"].properties.len());
+    }
+
+
+    #[test]
+    fn add_root_indent_prepends_spaces_to_each_line() {
+        let input = "foo\nbar\n";
+        let out = add_root_indent(input, 4);
+        assert_eq!(out, "    foo\n    bar\n");
     }
 }
