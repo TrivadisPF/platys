@@ -1131,7 +1131,6 @@ dependencies = [
  "indoc",
  "libc",
  "log",
- "regex",
  "reqwest",
  "serde",
  "serde_yaml",

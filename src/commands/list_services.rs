@@ -1,8 +1,8 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Args;
 
 use crate::cli::DEFAULT_STACK;
-use crate::config::service_regex;
+use crate::config::parse_config;
 use crate::docker::pull_config;
 
 #[derive(Args, Debug)]
@@ -18,28 +18,18 @@ pub struct ListServicesArgs {
 
 pub async fn run(args: ListServicesArgs) -> Result<()> {
     let raw = pull_config(&args.stack, &args.stack_version).await?;
+    let cfg = parse_config(&raw)?;
 
-    let parsed: serde_yaml::Value =
-        serde_yaml::from_str(&raw).context("Failed to parse config YAML")?;
-
-    let re = service_regex();
-
-    println!("{}",
-        "*".repeat(94)
-    );
+    let banner = "*".repeat(94);
+    println!("{banner}");
     println!(
         "* The following services are available in [ {} : {} ]  *",
         args.stack, args.stack_version
     );
-    println!("{}", "*".repeat(94));
+    println!("{banner}");
 
-    if let Some(mapping) = parsed.as_mapping() {
-        for (key, _) in mapping {
-            let key_str = key.as_str().unwrap_or("");
-            if let Some(caps) = re.captures(key_str) {
-                println!("{}", &caps[1]);
-            }
-        }
+    for service_name in cfg.services.keys() {
+        println!("{service_name}");
     }
 
     Ok(())

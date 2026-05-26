@@ -5,7 +5,7 @@ use bollard::container::{
 use bollard::image::CreateImageOptions;
 use clap::Args;
 use futures_util::StreamExt;
-use regex::Regex;
+
 
 use crate::cli::DEFAULT_STACK;
 use crate::docker::{stop_remove_container, wait_for_container};
@@ -75,17 +75,22 @@ pub async fn run(args: StacksArgs) -> Result<()> {
         }),
     );
 
-    let re = Regex::new(r"([A-Z0-9_-]+)\.yml").expect("valid regex");
+
     let mut stacks: Vec<String> = Vec::new();
 
     while let Some(item) = log_stream.next().await {
         if let Ok(chunk) = item {
             let line = chunk.to_string();
-            for cap in re.captures_iter(&line) {
-                stacks.push(cap[1].to_string());
+            for word in line.split_whitespace() {
+                if let Some(name) = word.strip_suffix(".yml") {
+                    if is_stack_name(name) {
+                        stacks.push(name.to_string());
+                    }
+                }
             }
         }
     }
+
 
     stop_remove_container(&docker, &resp.id).await?;
 
@@ -95,4 +100,10 @@ pub async fn run(args: StacksArgs) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn is_stack_name(s: &str) -> bool {
+    !s.is_empty() && s.bytes().all(|b|
+        b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_' || b == b'-'
+    )
 }

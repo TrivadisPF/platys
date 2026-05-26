@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Result};
 use bollard::container::{
     Config, CreateContainerOptions, LogsOptions, RemoveContainerOptions, StartContainerOptions,
-    StopContainerOptions
+    StopContainerOptions,
 };
 use bollard::models::HostConfig;
 use bollard::models::{Mount, MountTypeEnum};
@@ -10,8 +10,7 @@ use futures_util::StreamExt;
 use std::fs;
 use std::path::PathBuf;
 
-
-use crate::config::{download_remote_file, node_limit, validate_platys, YamlFile};
+use crate::config::{download_remote_file, node_limit, parse_config, validate_platys};
 use crate::docker::{init_client, wait_for_container};
 
 #[derive(Args, Debug)]
@@ -48,47 +47,46 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
         .with_context(|| format!("Cannot read config file [{}]", args.config_file))?;
 
     // ── Parse config ─────────────────────────────────────────────────────
-    let platys: YamlFile =
-        serde_yaml::from_str(&yml_content).context("Failed to parse config YAML")?;
-    let services: serde_yaml::Value =
-        serde_yaml::from_str(&yml_content).context("Failed to parse config YAML (services)")?;
-
-    validate_platys(&platys, &yml_content)?;
+    let config = parse_config(&yml_content)?;
+    validate_platys(&config.platys, &yml_content)?;
 
     // ── Check node limits ────────────────────────────────────────────────
-    if let Some(mapping) = services.as_mapping() {
-        for (key, value) in mapping {
-            let key_str = key.as_str().unwrap_or("");
-            if let Some(max) = node_limit(key_str) {
-                if let Some(val_str) = value.as_str() {
-                    let val: u32 = val_str.parse().unwrap_or(0);
-                    if val > max {
-                        bail!(
-                            "Number of nodes for [{}] = {} exceeds maximum = {}",
-                            key_str,
-                            val,
-                            max
-                        );
-                    }
+    for (svc_name, svc) in &config.services {
+        for (prop_name, value) in &svc.properties {
+            let full_key = format!("{}:{}", svc_name, prop_name);
+            if let Some(max) = node_limit(&full_key) {
+                let count = value
+                    .as_u64()
+                    .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
+                    .unwrap_or(0);
+
+                if count > max as u64 {
+                    bail!(
+                        "Number of nodes for [{}] = {} exceeds maximum = {}",
+                        full_key,
+                        count,
+                        max
+                    );
                 }
             }
         }
     }
 
-    log::debug!("Using config [{}]: platform-name={}, stack={}, stack-version={}, structure={}",
-            args.config_file,
-            platys.platys.platform_name,
-            platys.platys.platform_stack,
-            platys.platys.platform_stack_version,
-            platys.platys.structure);
-
+    log::debug!(
+        "Using config [{}]: platform-name={}, stack={}, stack-version={}, structure={}",
+        args.config_file,
+        config.platys.platform_name,
+        config.platys.platform_stack,
+        config.platys.platform_stack_version,
+        config.platys.structure
+    );
 
     // ── Determine output destination ─────────────────────────────────────
     let current_dir = std::env::current_dir().context("Cannot determine current directory")?;
     let mut destination = current_dir.clone();
 
-    if platys.platys.structure == "subfolder" {
-        destination = destination.join(&platys.platys.platform_name);
+    if config.platys.structure == "subfolder" {
+        destination = destination.join(&config.platys.platform_name);
         fs::create_dir_all(&destination)
             .with_context(|| format!("Failed to create destination {:?}", destination))?;
         eprintln!("Generating stack on [{:?}]", destination);
@@ -97,7 +95,6 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
     //when verbose is passed to the main class it set logging level to debug  @see main.rs
     let verbose = log::max_level() >= log::LevelFilter::Debug;
 
-
     // ── Build environment for the container ──────────────────────────────
     let mut env: Vec<String> = Vec::new();
     env.push(format!("VERBOSE={}", if verbose { 1 } else { 0 }));
@@ -105,8 +102,8 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
     env.push(format!("DEL_EMPTY_LINES={}", args.del_empty_lines as u8));
 
     // ── Run the generator container ──────────────────────────────────────
-    let stack = &platys.platys.platform_stack;
-    let version = &platys.platys.platform_stack_version;
+    let stack = &config.platys.platform_stack;
+    let version = &config.platys.platform_stack_version;
 
     let docker = init_client(stack, version).await?;
 
@@ -173,7 +170,7 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
         .context("Failed to start generator container")?;
 
     // Wait for completion
-    wait_for_container(&docker, &resp.id,).await?;
+    wait_for_container(&docker, &resp.id).await?;
 
     // Stream logs to stdout
     let mut log_stream = docker.logs(
@@ -223,7 +220,11 @@ fn users_current_gid() -> u32 {
 }
 
 #[cfg(not(unix))]
-fn users_current_uid() -> u32 { 0 }
+fn users_current_uid() -> u32 {
+    0
+}
 
 #[cfg(not(unix))]
-fn users_current_gid() -> u32 { 0 }
+fn users_current_gid() -> u32 {
+    0
+}

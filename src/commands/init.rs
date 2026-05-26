@@ -4,7 +4,7 @@ use crate::config::{
     serialize_config,
 };
 use crate::docker::pull_config;
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 use clap::Args;
 
 use std::fs;
