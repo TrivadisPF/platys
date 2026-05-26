@@ -3,31 +3,12 @@ use indexmap::IndexMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
-// ── Regex for service key detection ──────────────────────────────────────────
+
 
 pub const SERVICE_REGEX: &str = r"^([A-Z0-9]+(?:_[A-Z0-9]+)*)_enable$";
 
 pub fn service_regex() -> Regex {
     Regex::new(SERVICE_REGEX).expect("SERVICE_REGEX is valid")
-}
-
-// ── Typed config structs (used by `gen`) ─────────────────────────────────────
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct YamlFile {
-    pub platys: PlatysSection,
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct PlatysSection {
-    #[serde(rename = "platform-name", default)]
-    pub platform_name: String,
-    #[serde(rename = "platform-stack", default)]
-    pub platform_stack: String,
-    #[serde(rename = "platform-stack-version", default)]
-    pub platform_stack_version: String,
-    #[serde(default)]
-    pub structure: String,
 }
 
 // ── Node-level YAML helpers (used by `init`) ─────────────────────────────────
@@ -150,19 +131,6 @@ pub fn print_banner(path: &str) {
     println!("{}", BANNER.replace("{}", path));
 }
 
-#[derive(Debug, Default)]
-pub struct ParsedConfig {
-    pub platys: PlatysSection,
-    pub globals: IndexMap<String, Value>,
-    pub services: IndexMap<String, Service>,
-}
-
-#[derive(Debug, Default)]
-pub struct Service {
-    pub enabled: bool,
-    pub properties: IndexMap<String, Value>,
-}
-
 fn is_service_name(s: &str) -> bool {
     !s.is_empty()
         && s.bytes()
@@ -207,8 +175,8 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
         // handle service properties (if we have a current service)
         if let Some(svc) = &current_service {
             if let Some(property_name) = key
-                .strip_suffix(svc.as_str())
-                .and_then(|s| s.strip_suffix('_'))
+                .strip_prefix(svc.as_str())
+                .and_then(|s| s.strip_prefix('_'))
             {
                 if is_property_name(property_name) {
                     cfg.services
@@ -257,4 +225,118 @@ pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
     }
 
     serde_yaml::to_string(&root).context("Failed to serialize config")
+}
+
+//Structs
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct YamlFile {
+    pub platys: PlatysSection,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct PlatysSection {
+    #[serde(rename = "platform-name", default)]
+    pub platform_name: String,
+    #[serde(rename = "platform-stack", default)]
+    pub platform_stack: String,
+    #[serde(rename = "platform-stack-version", default)]
+    pub platform_stack_version: String,
+    #[serde(default)]
+    pub structure: String,
+}
+
+#[derive(Debug, Default)]
+pub struct ParsedConfig {
+    pub platys: PlatysSection,
+    pub globals: IndexMap<String, Value>,
+    pub services: IndexMap<String, Service>,
+}
+
+#[derive(Debug, Default)]
+pub struct Service {
+    pub enabled: bool,
+    pub properties: IndexMap<String, Value>,
+}
+
+#[cfg(test)]
+mod tests{
+    use indoc::indoc;
+    use super::*; //import everything from the module
+    //check new random service is properly parsed
+    #[test]
+    fn parses_arbitrary_new_service() {
+        let yaml = indoc! {"
+          platys:
+            platform-name: test
+            platform-stack: test/stack
+            platform-stack-version: '1.0'
+            structure: flat
+          OPENSEARCH_enable: true
+          OPENSEARCH_nodes: 5
+          OPENSEARCH_replicas: 2
+      "};
+
+        let cfg = parse_config(&yaml).expect("Should Parse");
+        let svc = cfg.services.get("OPENSEARCH").expect("OPENSEARCH service should exist");
+        assert!(svc.enabled);
+        assert_eq!(svc.properties.len(), 2);
+        assert!(svc.properties.contains_key("nodes"));
+        assert!(svc.properties.contains_key("replicas"));
+    }
+
+
+    // --- Test 2: properties whose names contain `_enable` are NOT toggles ---
+    #[test]
+    fn property_with_enable_in_name_is_property(){
+        let yaml = indoc! {"
+              platys:
+                platform-name: t
+                platform-stack: t/s
+                platform-stack-version: '1'
+                structure: flat
+              KAFKA_enable: true
+              KAFKA_delete_topic_enable: true
+              KAFKA_auto_create_topics_enable: false
+          "};
+
+        let cfg = parse_config(&yaml).expect("Should Parse");
+        assert_eq!(cfg.services.len(), 1, "expected exactly one service");
+        let kafka = cfg.services.get("KAFKA").expect("KAFKA service should exist");
+        assert!(kafka.enabled);
+        assert!(kafka.properties.contains_key("delete_topic_enable"));
+        assert!(kafka.properties.contains_key("auto_create_topics_enable"));
+        assert_eq!(kafka.properties["auto_create_topics_enable"].as_bool(), Some(false));
+        assert_eq!(kafka.properties["delete_topic_enable"].as_bool(), Some(true));
+
+    }
+
+    // --- Test 3: round-trip text → struct → text → struct preserves content ---
+    #[test]
+    fn round_trip_perserves_content(){
+        let yaml = indoc! {"
+              platys:
+                platform-name: test
+                platform-stack: stack
+                platform-stack-version: '1.0'
+                structure: flat
+              use_timezone: ''
+              generate_passwords: false
+              KAFKA_enable: true
+              KAFKA_broker_nodes: 3
+              KAFKA_broker_first_port: 9092
+              ZOOKEEPER_enable: false
+              ZOOKEEPER_nodes: 1
+          "};
+
+        let cfg = parse_config(&yaml).expect("Should Parse");
+        let txt = serialize_config(&cfg).expect("Should serialize config");
+        let reparsed_cfg = parse_config(&txt).expect("Should Parse");
+
+        assert_eq!(&reparsed_cfg.services.len(), &cfg.services.len());
+        assert_eq!(&reparsed_cfg.globals.len(), &cfg.globals.len());
+        assert!(&reparsed_cfg.services["KAFKA"].enabled);
+        assert!(!&reparsed_cfg.services["ZOOKEEPER"].enabled);
+        assert_eq!(&reparsed_cfg.services["KAFKA"].properties.len(), &cfg.services["KAFKA"].properties.len());
+    }
 }
