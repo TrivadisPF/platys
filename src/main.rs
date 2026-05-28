@@ -1,7 +1,7 @@
 mod cli;
-mod docker;
-mod config;
 mod commands;
+mod config;
+mod docker;
 
 use clap::Parser;
 use cli::Cli;
@@ -10,8 +10,12 @@ use cli::Cli;
 async fn main() {
     let cli = Cli::parse();
     env_logger::Builder::new()
-        .filter_level(if cli.verbose { log::LevelFilter::Debug } else { log::LevelFilter::Info })
-        .format_timestamp(None)   // skip timestamps for CLI tool feel
+        .filter_level(if cli.verbose {
+            log::LevelFilter::Debug
+        } else {
+            log::LevelFilter::Info
+        })
+        .format_timestamp(None) // skip timestamps for CLI tool feel
         .init();
 
     if let Err(e) = cli.run().await {

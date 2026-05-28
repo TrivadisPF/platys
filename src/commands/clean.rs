@@ -1,11 +1,11 @@
+use crate::cli::DEFAULT_STACK;
+use crate::docker::get_file;
 use anyhow::{Context, Result};
 use clap::Args;
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use tar::Archive;
-
-use crate::docker::get_file;
 
 #[derive(Args, Debug)]
 pub struct CleanArgs {
@@ -19,8 +19,7 @@ pub async fn run(args: CleanArgs) -> Result<()> {
     log::info!("Deleting content of folder: {folder}");
 
     // Remove each entry inside the container-volume folder
-    let dir = fs::read_dir(&folder)
-        .with_context(|| format!("Cannot read directory {folder}"))?;
+    let dir = fs::read_dir(&folder).with_context(|| format!("Cannot read directory {folder}"))?;
 
     for entry in dir {
         let entry = entry.context("Failed to read dir entry")?;
@@ -31,11 +30,7 @@ pub async fn run(args: CleanArgs) -> Result<()> {
     // Restore default structure from the Docker image
     log::info!("About to revert to default structure on folder [{folder}]");
 
-    let tar_bytes = get_file(
-        "trivadis/platys-modern-data-platform", // stack is implicit here, same as Go
-        "/opt/mdps-gen/static-data/container-volume",
-    )
-    .await?;
+    let tar_bytes = get_file(DEFAULT_STACK, "/opt/mdps-gen/static-data/container-volume").await?;
 
     let base = Path::new(&args.base_folder);
     let mut archive = Archive::new(std::io::Cursor::new(tar_bytes));
@@ -47,11 +42,9 @@ pub async fn run(args: CleanArgs) -> Result<()> {
         let target: PathBuf = base.join(&*path);
 
         match header.entry_type() {
-            tar::EntryType::Directory => {
-                if !target.exists() {
-                    fs::create_dir_all(&target)
-                        .with_context(|| format!("Failed to create dir {:?}", target))?;
-                }
+            tar::EntryType::Directory if !target.exists() => {
+                fs::create_dir_all(&target)
+                    .with_context(|| format!("Failed to create dir {:?}", target))?;
             }
             tar::EntryType::Regular => {
                 if let Some(parent) = target.parent() {
@@ -61,7 +54,9 @@ pub async fn run(args: CleanArgs) -> Result<()> {
                 let mode = header.mode().unwrap_or(0o644);
                 let mut file = open_file_with_mode(&target, mode)?;
                 let mut content = Vec::new();
-                entry.read_to_end(&mut content).context("Failed to read entry")?;
+                entry
+                    .read_to_end(&mut content)
+                    .context("Failed to read entry")?;
                 std::io::Write::write_all(&mut file, &content)
                     .with_context(|| format!("Failed to write {:?}", target))?;
             }

@@ -1,9 +1,8 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result, anyhow, bail};
 use bollard::Docker;
 use bollard::container::{
     Config, CreateContainerOptions, DownloadFromContainerOptions, InspectContainerOptions,
     LogsOptions, RemoveContainerOptions, StartContainerOptions, StopContainerOptions,
-
 };
 use bollard::image::CreateImageOptions;
 use futures_util::stream::StreamExt;
@@ -36,10 +35,10 @@ pub async fn init_client(stack: &str, version: &str) -> Result<Docker> {
         match item {
             Ok(info) => {
                 if let Some(status) = info.status {
-                    println!("{status}");
+                    log::info!("{status}");
                 }
             }
-            Err(e) => return Err(anyhow!("Image pull error: {e}")),
+            Err(e) => bail!("Image pull error: {e}"),
         }
     }
 
@@ -69,7 +68,7 @@ pub async fn stop_remove_container(docker: &Docker, id: &str) -> Result<()> {
 
 /// Waits for a container to finish, then returns its stdout/stderr logs as a String.
 pub async fn wait_and_collect_logs(docker: &Docker, id: &str) -> Result<String> {
-    wait_for_container(&docker, &id).await?;
+    wait_for_container(docker, id).await?;
 
     let mut log_stream = docker.logs(
         id,
@@ -84,7 +83,7 @@ pub async fn wait_and_collect_logs(docker: &Docker, id: &str) -> Result<String> 
     while let Some(item) = log_stream.next().await {
         match item {
             Ok(chunk) => output.push_str(&chunk.to_string()),
-            Err(e) => eprintln!("Log error: {e}"),
+            Err(e) => bail!("Log error: {e}"),
         }
     }
 
@@ -152,7 +151,12 @@ pub async fn pull_config(stack: &str, version: &str) -> Result<String> {
 
         // Extract config from tar
         let mut archive = Archive::new(io::Cursor::new(tar_bytes));
-        for entry in archive.entries().context("Failed to iterate tar entries")? {
+
+        if let Some(entry) = archive
+            .entries()
+            .context("Failed to iterate tar entries")?
+            .next()
+        {
             let mut entry = entry.context("Bad tar entry")?;
             let mut content = String::new();
             entry

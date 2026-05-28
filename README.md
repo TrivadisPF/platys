@@ -7,7 +7,7 @@
 ```
 src/
   main.rs            # entry point — parses CLI and dispatches
-  cli.rs             # clap CLI definition (replaces cmd/root.go)
+  cli.rs             # clap CLI definition 
   docker.rs          # Docker helpers (pull_config, get_file, stop_remove_container)
   config.rs          # YAML types, validators, node-limit map, regex helpers
   commands/
@@ -29,22 +29,31 @@ cargo build --release
 # binary at: target/release/platys
 ```
 
-Requires Docker to be running (same as the Go original).
+Requires Docker to be running 
 
 ## Dependencies
 
 ```toml
-clap        = "4"          # CLI parsing 
-bollard     = "0.17"       # Docker API
-tokio       = "1"          # async runtime
-serde       = "1"          # serialisation
-serde_yaml  = "0.9"        # YAML
-reqwest     = "0.12"       # HTTP (for --config-url)
-anyhow      = "1"          # ergonomic error handling
-regex       = "1"          # service key matching
-futures-util= "0.3"        # stream helpers
-tar         = "0.4"        # tar extraction
-tempfile    = "3"          # temp files for remote configs
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+bollard = "0.17"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+yaml_serde = "0.10"
+reqwest = { version = "0.13", features = ["blocking"] }
+anyhow = "1"
+
+futures-util = "0.3"
+tar = "0.4"
+tempfile = "3"
+log = "0.4.29"
+libc ="0.2.186"
+env_logger = "0.11.10"
+indexmap = {version = "2", features = ["serde"]}
+
+[dev-dependencies]
+indoc = "2"
+
 ```
 
 On Linux/macOS, add `libc = "0.2"` to `Cargo.toml` if you need the UID/GID

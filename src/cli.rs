@@ -12,7 +12,6 @@ pub const VERSION_INFO: &str = concat!(
     "Copyright (c) 2018-2026, Trivadis AG",
 );
 
-
 /// Platys platform generator
 #[derive(Parser)]
 #[command(

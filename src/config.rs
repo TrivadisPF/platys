@@ -1,18 +1,18 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use serde_yaml::Value;
-
+use yaml_serde::Value;
 
 // ── Indentation helper ────────────────────────────────────────────────────────
 
-
-//Indentation is needed as this file actually is nerged to an existing one on which the platys
+//Indentation is needed as this file actually is merged to an existing one on which the platys
 // info needs to be indented
 pub fn add_root_indent(yaml: &str, n: usize) -> String {
     let mut out = String::with_capacity(yaml.len() + yaml.lines().count() * n + 1);
     for line in yaml.lines() {
-        for _ in 0..n { out.push(' '); }
+        for _ in 0..n {
+            out.push(' ');
+        }
         out.push_str(line);
         out.push('\n');
     }
@@ -114,8 +114,8 @@ fn is_property_name(s: &str) -> bool {
 }
 
 pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
-    let root: serde_yaml::Mapping =
-        serde_yaml::from_str(raw).context("Failed to parse YAML file")?;
+    let root: yaml_serde::Mapping =
+        yaml_serde::from_str(raw).context("Failed to parse YAML file")?;
     let mut cfg = ParsedConfig::default();
     let mut current_service: Option<String> = None;
 
@@ -127,36 +127,34 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
 
         //handle platys section
         if key == "platys" {
-            cfg.platys = serde_yaml::from_value(v).context("Failed to parse [platys] section")?;
+            cfg.platys = yaml_serde::from_value(v).context("Failed to parse [platys] section")?;
             continue;
         }
 
         //handle services
-        if let Some(svc) = key.strip_suffix("_enable") {
-            if is_service_name(svc) {
-                let enabled = v.as_bool().unwrap_or(false);
-                let entry = cfg.services.entry(svc.to_string()).or_default();
-                entry.enabled = enabled;
-                current_service = Some(svc.to_string()); //keep track of current service
-                continue;
-            }
+        if let Some(svc) = key.strip_suffix("_enable")
+            && is_service_name(svc)
+        {
+            let enabled = v.as_bool().unwrap_or(false);
+            let entry = cfg.services.entry(svc.to_string()).or_default();
+            entry.enabled = enabled;
+            current_service = Some(svc.to_string()); //keep track of current service
+            continue;
         }
 
         // handle service properties (if we have a current service)
-        if let Some(svc) = &current_service {
-            if let Some(property_name) = key
+        if let Some(svc) = &current_service
+            && let Some(property_name) = key
                 .strip_prefix(svc.as_str())
                 .and_then(|s| s.strip_prefix('_'))
-            {
-                if is_property_name(property_name) {
-                    cfg.services
-                        .get_mut(svc)
-                        .unwrap()
-                        .properties
-                        .insert(property_name.to_string(), v);
-                    continue;
-                }
-            }
+            && is_property_name(property_name)
+        {
+            cfg.services
+                .get_mut(svc)
+                .unwrap()
+                .properties
+                .insert(property_name.to_string(), v);
+            continue;
         }
         cfg.globals.insert(key, v); // not platys, service or property section, fallback into globals
     }
@@ -165,12 +163,12 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
 }
 
 pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
-    let mut root = serde_yaml::Mapping::new();
+    let mut root = yaml_serde::Mapping::new();
 
     // create platys section
     root.insert(
         Value::String("platys".to_string()),
-        serde_yaml::to_value(&cfg.platys).context("Failed to serialize platys")?,
+        yaml_serde::to_value(&cfg.platys).context("Failed to serialize platys")?,
     );
 
     // create globals in the order they were parsed
@@ -194,12 +192,10 @@ pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
         }
     }
 
-    serde_yaml::to_string(&root).context("Failed to serialize config")
+    yaml_serde::to_string(&root).context("Failed to serialize config")
 }
 
 //Structs
-
-
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct PlatysSection {
@@ -227,7 +223,7 @@ pub struct Service {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
     use indoc::indoc;
     //import everything from the module
@@ -246,17 +242,19 @@ mod tests{
       "};
 
         let cfg = parse_config(&yaml).expect("Should Parse");
-        let svc = cfg.services.get("OPENSEARCH").expect("OPENSEARCH service should exist");
+        let svc = cfg
+            .services
+            .get("OPENSEARCH")
+            .expect("OPENSEARCH service should exist");
         assert!(svc.enabled);
         assert_eq!(svc.properties.len(), 2);
         assert!(svc.properties.contains_key("nodes"));
         assert!(svc.properties.contains_key("replicas"));
     }
 
-
     // --- Test 2: properties whose names contain `_enable` are NOT toggles ---
     #[test]
-    fn property_with_enable_in_name_is_property(){
+    fn property_with_enable_in_name_is_property() {
         let yaml = indoc! {"
               platys:
                 platform-name: t
@@ -270,18 +268,26 @@ mod tests{
 
         let cfg = parse_config(&yaml).expect("Should Parse");
         assert_eq!(cfg.services.len(), 1, "expected exactly one service");
-        let kafka = cfg.services.get("KAFKA").expect("KAFKA service should exist");
+        let kafka = cfg
+            .services
+            .get("KAFKA")
+            .expect("KAFKA service should exist");
         assert!(kafka.enabled);
         assert!(kafka.properties.contains_key("delete_topic_enable"));
         assert!(kafka.properties.contains_key("auto_create_topics_enable"));
-        assert_eq!(kafka.properties["auto_create_topics_enable"].as_bool(), Some(false));
-        assert_eq!(kafka.properties["delete_topic_enable"].as_bool(), Some(true));
-
+        assert_eq!(
+            kafka.properties["auto_create_topics_enable"].as_bool(),
+            Some(false)
+        );
+        assert_eq!(
+            kafka.properties["delete_topic_enable"].as_bool(),
+            Some(true)
+        );
     }
 
     // --- Test 3: round-trip text → struct → text → struct preserves content ---
     #[test]
-    fn round_trip_perserves_content(){
+    fn round_trip_preserves_content() {
         let yaml = indoc! {"
               platys:
                 platform-name: test
@@ -305,9 +311,11 @@ mod tests{
         assert_eq!(&reparsed_cfg.globals.len(), &cfg.globals.len());
         assert!(&reparsed_cfg.services["KAFKA"].enabled);
         assert!(!&reparsed_cfg.services["ZOOKEEPER"].enabled);
-        assert_eq!(&reparsed_cfg.services["KAFKA"].properties.len(), &cfg.services["KAFKA"].properties.len());
+        assert_eq!(
+            &reparsed_cfg.services["KAFKA"].properties.len(),
+            &cfg.services["KAFKA"].properties.len()
+        );
     }
-
 
     #[test]
     fn add_root_indent_prepends_spaces_to_each_line() {

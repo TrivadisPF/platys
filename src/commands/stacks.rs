@@ -1,11 +1,8 @@
 use anyhow::{Context, Result};
-use bollard::container::{
-    Config, CreateContainerOptions, LogsOptions, StartContainerOptions,
-};
+use bollard::container::{Config, CreateContainerOptions, LogsOptions, StartContainerOptions};
 use bollard::image::CreateImageOptions;
 use clap::Args;
 use futures_util::StreamExt;
-
 
 use crate::cli::DEFAULT_STACK;
 use crate::docker::{stop_remove_container, wait_for_container};
@@ -22,8 +19,8 @@ pub async fn run(args: StacksArgs) -> Result<()> {
     let version = &args.stack_version;
     let image_ref = format!("{stack}:{version}");
 
-    let docker = bollard::Docker::connect_with_local_defaults()
-        .context("Failed to connect to Docker")?;
+    let docker =
+        bollard::Docker::connect_with_local_defaults().context("Failed to connect to Docker")?;
 
     // Pull the image
     let mut pull_stream = docker.create_image(
@@ -35,10 +32,10 @@ pub async fn run(args: StacksArgs) -> Result<()> {
         None,
     );
     while let Some(item) = pull_stream.next().await {
-        if let Ok(info) = item {
-            if let Some(status) = info.status {
-                println!("{status}");
-            }
+        if let Ok(info) = item
+            && let Some(status) = info.status
+        {
+            log::info!("{status}");
         }
     }
 
@@ -62,9 +59,9 @@ pub async fn run(args: StacksArgs) -> Result<()> {
     docker
         .start_container(&resp.id, None::<StartContainerOptions<String>>)
         .await
-        .context("Failed to start container")?;   
+        .context("Failed to start container")?;
 
-    wait_for_container(&docker, &image_ref).await?;
+    wait_for_container(&docker, &resp.id).await?;
 
     let mut log_stream = docker.logs(
         &resp.id,
@@ -75,22 +72,20 @@ pub async fn run(args: StacksArgs) -> Result<()> {
         }),
     );
 
-
     let mut stacks: Vec<String> = Vec::new();
 
     while let Some(item) = log_stream.next().await {
         if let Ok(chunk) = item {
             let line = chunk.to_string();
             for word in line.split_whitespace() {
-                if let Some(name) = word.strip_suffix(".yml") {
-                    if is_stack_name(name) {
-                        stacks.push(name.to_string());
-                    }
+                if let Some(name) = word.strip_suffix(".yml")
+                    && is_stack_name(name)
+                {
+                    stacks.push(name.to_string());
                 }
             }
         }
     }
-
 
     stop_remove_container(&docker, &resp.id).await?;
 
@@ -103,7 +98,7 @@ pub async fn run(args: StacksArgs) -> Result<()> {
 }
 
 fn is_stack_name(s: &str) -> bool {
-    !s.is_empty() && s.bytes().all(|b|
-        b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_' || b == b'-'
-    )
+    !s.is_empty()
+        && s.bytes()
+            .all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_' || b == b'-')
 }

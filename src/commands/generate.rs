@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use bollard::container::{
     Config, CreateContainerOptions, LogsOptions, RemoveContainerOptions, StartContainerOptions,
     StopContainerOptions,
@@ -89,7 +89,7 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
         destination = destination.join(&config.platys.platform_name);
         fs::create_dir_all(&destination)
             .with_context(|| format!("Failed to create destination {:?}", destination))?;
-        eprintln!("Generating stack on [{:?}]", destination);
+        log::info!("Generating stack on [{:?}]", destination);
     }
 
     //when verbose is passed to the main class it set logging level to debug  @see main.rs
@@ -184,7 +184,7 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
     while let Some(item) = log_stream.next().await {
         match item {
             Ok(chunk) => print!("{chunk}"),
-            Err(e) => eprintln!("Log error: {e}"),
+            Err(e) => bail!("Log error: {e}"),
         }
     }
 

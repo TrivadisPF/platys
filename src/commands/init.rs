@@ -1,10 +1,7 @@
 use crate::cli::DEFAULT_STACK;
-use crate::config::{
-    add_root_indent, parse_config, print_banner,
-    serialize_config,
-};
+use crate::config::{add_root_indent, parse_config, print_banner, serialize_config};
 use crate::docker::pull_config;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::Args;
 
 use std::fs;
