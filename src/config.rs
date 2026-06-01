@@ -323,4 +323,82 @@ mod tests {
         let out = add_root_indent(input, 4);
         assert_eq!(out, "    foo\n    bar\n");
     }
+
+    #[test]
+    fn validate_platys_accepts_valid_config() {
+        let p = PlatysSection {
+            platform_name: "p".into(),
+            platform_stack: "s".into(),
+            platform_stack_version: "1".into(),
+            structure: "flat".into(),
+        };
+        assert!(validate_platys(&p, "").is_ok());
+    }
+
+    #[test]
+    fn validate_platys_detects_legacy_keys() {
+        let p = PlatysSection::default();
+        let raw = "stack-image-name: foo\nstack-image-version: bar";
+        let err = validate_platys(&p, raw).unwrap_err().to_string();
+        assert!(err.contains("legacy"));
+    }
+
+    #[test]
+    fn validate_platys_rejects_invalid_structure() {
+        let p = PlatysSection {
+            platform_name: "p".into(),
+            platform_stack: "s".into(),
+            platform_stack_version: "1".into(),
+            structure: "weird".into(),
+        };
+        let err = validate_platys(&p, "").unwrap_err().to_string();
+        assert!(err.contains("flat") || err.contains("subfolder"));
+    }
+
+    #[test]
+    fn validate_platys_rejects_empty_fields() {
+        let p = PlatysSection {
+            platform_name: "".into(),
+            platform_stack: "s".into(),
+            platform_stack_version: "1".into(),
+            structure: "flat".into(),
+        };
+        assert!(validate_platys(&p, "").is_err());
+    }
+
+    #[test]
+    fn node_limit_returns_known_limits() {
+        assert_eq!(node_limit("KAFKA_broker_nodes"), Some(6));
+        assert_eq!(node_limit("ZOOKEEPER_nodes"), Some(3));
+        assert_eq!(node_limit("HADOOP_datanodes"), Some(6));
+        assert_eq!(node_limit("NONEXISTENT"), None);
+    }
+
+    #[test]
+    fn serialize_emits_platys_first_then_globals_then_services() {
+        let mut cfg = ParsedConfig::default();
+        cfg.platys.platform_name = "test".into();
+        cfg.globals.insert("use_timezone".into(), Value::String("".into()));
+        cfg.services.insert("KAFKA".into(), Service {
+            enabled: true,
+            properties: {
+                let mut p = IndexMap::new();
+                p.insert("broker_nodes".into(), Value::Number(3.into()));
+                p
+            },
+        });
+
+        let out = serialize_config(&cfg).expect("serialize");
+
+        let platys_pos = out.find("platys:").expect("platys present");
+        let global_pos = out.find("use_timezone:").expect("global present");
+        let service_pos = out.find("KAFKA_enable:").expect("service present");
+        let prop_pos = out.find("KAFKA_broker_nodes:").expect("prop present");
+
+        assert!(platys_pos < global_pos, "platys before globals");
+        assert!(global_pos < service_pos, "globals before services");
+        assert!(service_pos < prop_pos, "_enable before properties");
+    }
+
+
 }
