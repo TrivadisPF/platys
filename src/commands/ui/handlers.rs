@@ -47,7 +47,8 @@ pub(crate) async fn api_services(State(state): State<AppState>) -> Json<Services
                     .properties
                     .iter()
                     .map(|(k, v)| {
-                        let docs = state.docs.properties.get(k);
+                        let full_property_key = format!("{name}_{k}");
+                        let docs = state.docs.properties.get(&full_property_key);
                         PropertyDto {
                             key: k.clone(),
                             value: yaml_to_json(v),

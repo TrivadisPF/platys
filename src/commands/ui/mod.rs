@@ -45,26 +45,61 @@ pub struct UiArgs {
     #[arg(short = 'c', long = "config-file", default_value = "config.yml")]
     pub config_file: String,
 
-    /// Local folder containing services.yml and index.yml (dev override;
-    /// falls back to no docs if omitted)
+    /// (dev builds only) Read services.yml/index.yml from a local folder
+    #[cfg(debug_assertions)]
     #[arg(long = "docs-path")]
     pub docs_path: Option<String>,
+
+    /// (dev builds only) Load seed config from disk instead of pulling the image
+    #[cfg(debug_assertions)]
+    #[arg(long = "seed-file")]
+    pub seed_file: Option<String>,
+}
+
+impl UiArgs {
+    fn docs_path(&self) -> Option<&str> {
+        #[cfg(debug_assertions)]
+        {
+            self.docs_path.as_deref()
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            None
+        }
+    }
+
+    fn seed_file(&self) -> Option<&str> {
+        #[cfg(debug_assertions)]
+        {
+            self.seed_file.as_deref()
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            None
+        }
+    }
 }
 
 pub async fn run(args: UiArgs) -> Result<()> {
-    //pull seed from image
-    println!(
-        "Pulling seed config from {} : {}",
-        args.stack, args.stack_version
-    );
-    let raw = pull_config(&args.stack, &args.stack_version)
-        .await
-        .context("Failed to pull seed config from Docker immage")?;
+    // Seed config: from disk in dev (--seed-file), else pulled from the image.
+    let raw = match args.seed_file() {
+        Some(path) => std::fs::read_to_string(path)
+            .with_context(|| format!("Failed to read seed file {path}"))?,
+        None => {
+            println!(
+                "Pulling seed config from {} : {}",
+                args.stack, args.stack_version
+            );
+            pull_config(&args.stack, &args.stack_version)
+                .await
+                .context("Failed to pull seed config from Docker image")?
+        }
+    };
     let cfg = parse_config(&raw).context("Failed to parse config file")?;
 
     println!("loaded services : {}", cfg.services.len());
 
-    let docs = match &args.docs_path {
+    let docs = match args.docs_path() {
         Some(path) => crate::docs::read_local(path).context("Failed to read docs from --docs-path")?,
         None => {
             let built = async {
