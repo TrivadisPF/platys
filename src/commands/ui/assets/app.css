@@ -1,0 +1,37 @@
+:root {
+    --platys-accent: #c8102e;
+}
+
+body {
+    background-color: #f5f6f8;
+}
+
+.navbar.is-platys {
+    background-color: var(--platys-accent);
+}
+
+.card {
+    height: 100%;
+}
+
+.card.is-enabled {
+    box-shadow: 0 0 0 2px var(--platys-accent);
+}
+
+.switch {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--platys-accent);
+    cursor: pointer;
+}
+
+.platys-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: var(--platys-accent);
+}
+
+.dropdown-content label.dropdown-item {
+    cursor: pointer;
+}

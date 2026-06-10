@@ -1,32 +1,30 @@
 //! Axum route handlers for the UI server.
 
+use axum::Json;
+use axum::extract::{Path, State};
+use axum::http::{StatusCode, header};
+use axum::response::{Html, IntoResponse, Response};
+
 use super::AppState;
 use super::dto::{
     GenerateRequest, GenerateResponse, PropertyDto, ServiceDto, ServicesResponse, json_to_yaml,
     yaml_to_json,
 };
 use crate::config::add_root_indent;
-use axum::extract::State;
-use axum::http::StatusCode;
-use axum::{Json, response::Html};
-
 pub(crate) async fn index() -> Html<&'static str> {
-    Html(
-        r#"<!DOCTYPE html>
-  <html>
-  <head>
-      <title>platys UI</title>
-      <style>
-          body { font-family: system-ui, sans-serif; padding: 2em; }
-          h1 { color: #c8102e; }
-      </style>
-  </head>
-  <body>
-      <h1>platys UI</h1>
-      <p>The server is running. The real UI will live here in later phases.</p>
-  </body>
-  </html>"#,
-    )
+    Html(include_str!("assets/index.html"))
+}
+
+/// Serves the vendored + app static assets, baked into the binary at compile time.
+pub(crate) async fn asset(Path(file): Path<String>) -> Response {
+    let (body, content_type) = match file.as_str() {
+        "bulma.min.css" => (include_str!("assets/bulma.min.css"), "text/css"),
+        "alpine.min.js" => (include_str!("assets/alpine.min.js"), "text/javascript"),
+        "app.css" => (include_str!("assets/app.css"), "text/css"),
+        "app.js" => (include_str!("assets/app.js"), "text/javascript"),
+        _ => return StatusCode::NOT_FOUND.into_response(),
+    };
+    ([(header::CONTENT_TYPE, content_type)], body).into_response()
 }
 
 pub(crate) async fn api_services(State(state): State<AppState>) -> Json<ServicesResponse> {

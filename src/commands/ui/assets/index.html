@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>platys</title>
+    <link rel="stylesheet" href="/assets/bulma.min.css">
+    <link rel="stylesheet" href="/assets/app.css">
+    <script defer src="/assets/app.js"></script>
+    <script defer src="/assets/alpine.min.js"></script>
+</head>
+<body>
+<div x-data="platys">
+    <header class="platys-header">
+        <div class="is-flex is-align-items-center px-5 py-3" style="gap:16px; flex-wrap:wrap;">
+            <span class="title is-5 has-text-white mb-0">platys</span>
+
+            <input class="input" type="search" placeholder="Search services…"
+                   x-model="search" style="max-width:360px;">
+
+            <div class="dropdown" :class="{ 'is-active': catMenuOpen }"
+                 @click.outside="catMenuOpen = false">
+                <div class="dropdown-trigger">
+                    <button class="button" type="button" @click="catMenuOpen = !catMenuOpen">
+                        <span x-text="`Categories (${selectedCats.length}/${categories.length})`"></span>
+                        <span class="icon is-small">▾</span>
+                    </button>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-content" style="max-height:320px; overflow:auto;">
+                        <div class="dropdown-item buttons are-small">
+                            <button class="button is-light" @click="allCats()">All</button>
+                            <button class="button is-light" @click="clearCats()">None</button>
+                        </div>
+                        <hr class="dropdown-divider">
+                        <template x-for="cat in categories" :key="cat">
+                            <label class="dropdown-item is-flex is-align-items-center" style="gap:8px;">
+                                <input type="checkbox" :checked="selectedCats.includes(cat)"
+                                       @change="toggleCat(cat)">
+                                <span x-text="cat"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="section pt-5">
+        <div class="container">
+            <p x-show="loading" class="has-text-grey">Loading services…</p>
+
+            <template x-for="cat in visibleCategories" :key="cat">
+                <div class="mb-6">
+                    <h2 class="subtitle is-6 has-text-grey" style="text-transform:uppercase" x-text="cat"></h2>
+                    <div class="columns is-multiline">
+                        <template x-for="svc in servicesIn(cat)" :key="svc.name">
+                            <div class="column is-one-quarter">
+                                <div class="card" :class="{ 'is-enabled': svc.enabled }">
+                                    <div class="card-content p-4">
+                                        <div class="is-flex is-justify-content-space-between is-align-items-center">
+                                            <span class="has-text-weight-semibold" x-text="svc.display_name"></span>
+                                            <input type="checkbox" class="switch" x-model="svc.enabled">
+                                        </div>
+                                        <p class="is-size-7 has-text-grey mt-2" x-text="svc.description"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <p x-show="!loading && visibleCategories.length === 0" class="has-text-grey">
+                No services match.
+            </p>
+        </div>
+    </section>
+</div>
+</body>
+</html>
