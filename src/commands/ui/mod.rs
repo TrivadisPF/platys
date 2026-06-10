@@ -66,7 +66,18 @@ pub async fn run(args: UiArgs) -> Result<()> {
 
     let docs = match &args.docs_path {
         Some(path) => crate::docs::read_local(path).context("Failed to read docs from --docs-path")?,
-        None => crate::docs::PlatysIndex::empty()
+        None => {
+            let built = async {
+                let (services_raw, index_raw)=
+                crate::docker::pull_docs(&args.stack, &args.stack_version).await?;
+                crate::docs::PlatysIndex::build(&services_raw, &index_raw)
+            }.await;
+
+            built.unwrap_or_else(|e| {
+                log::warn!("Could not load docs from image, continuing without: {e:#}");
+                crate::docs::PlatysIndex::empty()
+            })
+        }
     };
 
     //Build Shared state of the app

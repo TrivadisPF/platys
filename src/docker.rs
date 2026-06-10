@@ -138,7 +138,7 @@ pub async fn pull_config(stack: &str, version: &str) -> Result<String> {
 
         download_file_as_string(&docker, &container_id, CONFIG_FILE_PATH).await
     }
-    .await;
+        .await;
 
     // Always clean up, regardless of success or failure
     let _ = docker
@@ -251,6 +251,63 @@ pub async fn wait_for_container(docker: &Docker, id: &str) -> Result<()> {
         }
         Ok(())
     })
-    .await
-    .context("Container timed out after 120 seconds")?
+        .await
+        .context("Container timed out after 120 seconds")?
+}
+
+/// Pulls services.yml and index.yml from inside a freshly-created container,
+/// returning their raw YAML as (services, index)
+pub async fn pull_docs(stack: &str, version: &str) -> Result<(String, String)> {
+    let docker = init_client(stack, version).await?;
+
+    //force remove any existing containers
+    let _ = docker
+        .remove_container(
+            CONTAINER_NAME,
+            Some(RemoveContainerOptions {
+                force: true,
+                ..Default::default() // fill with default parameters
+            }),
+        )
+        .await; //ignore error as it might not exist
+
+    let response = docker.create_container(
+        Some(CreateContainerOptions {
+            name: CONTAINER_NAME,
+            platform: None,
+        }),
+        Config {
+            image: Some(format!("{stack}:{version}")),
+            tty: Some(true),
+            ..Default::default()
+        },
+    ).await
+        .context("Failed to create container")?;
+
+    let container_id = response.id.clone();
+
+    let result = async {
+        docker.start_container(&container_id, None::<StartContainerOptions<String>>)
+            .await
+            .context("Failed to start container")?;
+        wait_for_container(&docker, &container_id).await?;
+
+        let services = download_file_as_string(&docker, &container_id, crate::docs::SERVICES_YML_PATH).await?;
+        let index = download_file_as_string(&docker, &container_id, crate::docs::INDEX_YML_PATH).await?;
+
+        Ok((services, index))
+    }
+        .await;
+    // Always clean up, regardless of success or failure
+    let _ = docker
+        .remove_container(
+            &container_id,
+            Some(RemoveContainerOptions {
+                force: true,
+                ..Default::default()
+            }),
+        )
+        .await;
+
+    result
 }
