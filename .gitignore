@@ -133,3 +133,6 @@ vagrant/.vagrant/**
 .DS_Store
 /config.yml
 /dist/
+
+# JetBrains IDE
+.idea/

@@ -209,14 +209,14 @@ pub struct PlatysSection {
     pub structure: String,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Serialize)]
 pub struct ParsedConfig {
     pub platys: PlatysSection,
     pub globals: IndexMap<String, Value>,
     pub services: IndexMap<String, Service>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Serialize)]
 pub struct Service {
     pub enabled: bool,
     pub properties: IndexMap<String, Value>,

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, bail};
 use bollard::Docker;
 use bollard::container::{
     Config, CreateContainerOptions, DownloadFromContainerOptions, InspectContainerOptions,
@@ -136,36 +136,7 @@ pub async fn pull_config(stack: &str, version: &str) -> Result<String> {
             print!("{logs}");
         }
 
-        // Copy config file out of container
-        let mut byte_stream = docker.download_from_container(
-            &container_id,
-            Some(DownloadFromContainerOptions {
-                path: CONFIG_FILE_PATH,
-            }),
-        );
-
-        let mut tar_bytes: Vec<u8> = Vec::new();
-        while let Some(chunk) = byte_stream.next().await {
-            tar_bytes.extend_from_slice(&chunk.context("Failed to read tar stream")?);
-        }
-
-        // Extract config from tar
-        let mut archive = Archive::new(io::Cursor::new(tar_bytes));
-
-        if let Some(entry) = archive
-            .entries()
-            .context("Failed to iterate tar entries")?
-            .next()
-        {
-            let mut entry = entry.context("Bad tar entry")?;
-            let mut content = String::new();
-            entry
-                .read_to_string(&mut content)
-                .context("Failed to read config entry")?;
-            return Ok(content);
-        }
-
-        Err(anyhow!("config.yml not found in container tar"))
+        download_file_as_string(&docker, &container_id, CONFIG_FILE_PATH).await
     }
     .await;
 
@@ -226,6 +197,40 @@ pub async fn get_file(stack: &str, file_path: &str) -> Result<Vec<u8>> {
     stop_remove_container(&docker, &resp.id).await?;
 
     Ok(tar_bytes)
+}
+
+/// Extracts the first file entry from a Docker `download_from_container`
+/// tar stream and returns its contents as a String.
+fn extract_single_file_tar(tar_bytes: Vec<u8>) -> Result<String> {
+    let mut archive = Archive::new(io::Cursor::new(tar_bytes));
+    let entry = archive
+        .entries()
+        .context("Failed to iterate tar entries")?
+        .next()
+        .context("Tar file was empty")?;
+
+    let mut entry = entry.context("Bad tar entry")?;
+    let mut content = String::new();
+    entry
+        .read_to_string(&mut content)
+        .context("Failed to read config entry from tar")?;
+
+    Ok(content)
+}
+
+async fn download_file_as_string(
+    docker: &Docker,
+    container_id: &str,
+    path: &str,
+) -> Result<String> {
+    let mut byte_stream =
+        docker.download_from_container(container_id, Some(DownloadFromContainerOptions { path }));
+    let mut tar_bytes: Vec<u8> = Vec::new();
+    while let Some(chunk) = byte_stream.next().await {
+        tar_bytes.extend_from_slice(&chunk.context("Failed to read tar stream")?);
+    }
+
+    extract_single_file_tar(tar_bytes)
 }
 
 pub async fn wait_for_container(docker: &Docker, id: &str) -> Result<()> {

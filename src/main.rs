@@ -2,6 +2,7 @@ mod cli;
 mod commands;
 mod config;
 mod docker;
+pub mod docs;
 
 use clap::Parser;
 use cli::Cli;
