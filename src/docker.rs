@@ -124,17 +124,9 @@ pub async fn pull_config(stack: &str, version: &str) -> Result<String> {
 
     // Run everything in a closure so we can always clean up
     let result = async {
-        docker
-            .start_container(&container_id, None::<StartContainerOptions<String>>)
-            .await
-            .context("Failed to start container")?;
-
-        wait_for_container(&docker, &container_id).await?;
-
-        let logs = wait_and_collect_logs(&docker, &container_id).await?;
-        if !logs.is_empty() {
-            print!("{logs}");
-        }
+        // config.yml is baked into the image — copy it straight out of the
+        // created container. We deliberately don't start the container, since
+        // its entrypoint (generate.sh) would run and fail without an input config.
 
         // Copy config file out of container
         let mut byte_stream = docker.download_from_container(
