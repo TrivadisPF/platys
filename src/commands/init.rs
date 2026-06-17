@@ -65,15 +65,10 @@ pub async fn run(args: InitArgs) -> Result<()> {
     // ── Enable requested services ────────────────────────────────────────
     if !args.enable_services.is_empty() {
         let requested: Vec<&str> = args.enable_services.split(',').collect();
-
-        //keep only the services requested by the user
-        config
-            .services
-            .retain(|name, _| requested.contains(&name.as_str()));
-
-        //enable de services requested by user
+        // --enable-services: output contains ONLY these services (+ base config)
+        config.services.retain(|name, _| requested.contains(&name.as_str()));
         for svc in config.services.values_mut() {
-            svc.enabled = true
+            svc.enabled = true;
         }
     }
 
@@ -93,10 +88,13 @@ pub async fn run(args: InitArgs) -> Result<()> {
         config.platys.structure = args.structure.clone();
     }
 
-    let yaml_str = serialize_config(&config)?;
+    let yaml_str = serialize_config(&config, true)?;
     let indented = add_root_indent(&yaml_str, 6);
     fs::write(&args.config_file, indented)
         .with_context(|| format!("failed to write {}", args.config_file))?;
-    print_banner(&args.config_file);
+
+    let full_path = fs::canonicalize(&args.config_file)
+        .unwrap_or_else(|_| args.config_file.clone().into());
+    print_banner(&full_path.to_string_lossy());
     Ok(())
 }

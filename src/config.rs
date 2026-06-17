@@ -162,7 +162,10 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
     Ok(cfg)
 }
 
-pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
+/// Serialize config into YAML file (default config.yml)
+/// cfg: the in memory parsed config
+/// sort: whether the services  should be sorted alphabetically
+pub fn serialize_config(cfg: &ParsedConfig, sort: bool) -> Result<String> {
     let mut root = yaml_serde::Mapping::new();
 
     // create platys section
@@ -176,8 +179,15 @@ pub fn serialize_config(cfg: &ParsedConfig) -> Result<String> {
         root.insert(Value::String(k.clone()), v.clone());
     }
 
+    let mut service_names: Vec<&String> = cfg.services.keys().collect();
+
+    if sort {
+        service_names.sort();
+    }
+
     //create services
-    for (svc_name, svc) in &cfg.services {
+    for svc_name in service_names {
+        let svc = &cfg.services[svc_name];
         root.insert(
             Value::String(format!("{svc_name}_enable")),
             Value::Bool(svc.enabled),
@@ -304,7 +314,7 @@ mod tests {
           "};
 
         let cfg = parse_config(&yaml).expect("Should Parse");
-        let txt = serialize_config(&cfg).expect("Should serialize config");
+        let txt = serialize_config(&cfg, false).expect("Should serialize config");
         let reparsed_cfg = parse_config(&txt).expect("Should Parse");
 
         assert_eq!(&reparsed_cfg.services.len(), &cfg.services.len());
@@ -378,17 +388,21 @@ mod tests {
     fn serialize_emits_platys_first_then_globals_then_services() {
         let mut cfg = ParsedConfig::default();
         cfg.platys.platform_name = "test".into();
-        cfg.globals.insert("use_timezone".into(), Value::String("".into()));
-        cfg.services.insert("KAFKA".into(), Service {
-            enabled: true,
-            properties: {
-                let mut p = IndexMap::new();
-                p.insert("broker_nodes".into(), Value::Number(3.into()));
-                p
+        cfg.globals
+            .insert("use_timezone".into(), Value::String("".into()));
+        cfg.services.insert(
+            "KAFKA".into(),
+            Service {
+                enabled: true,
+                properties: {
+                    let mut p = IndexMap::new();
+                    p.insert("broker_nodes".into(), Value::Number(3.into()));
+                    p
+                },
             },
-        });
+        );
 
-        let out = serialize_config(&cfg).expect("serialize");
+        let out = serialize_config(&cfg, false).expect("serialize");
 
         let platys_pos = out.find("platys:").expect("platys present");
         let global_pos = out.find("use_timezone:").expect("global present");
@@ -399,6 +413,4 @@ mod tests {
         assert!(global_pos < service_pos, "globals before services");
         assert!(service_pos < prop_pos, "_enable before properties");
     }
-
-
 }
