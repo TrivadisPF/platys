@@ -10,9 +10,10 @@
     <script defer src="/assets/alpine.min.js"></script>
 </head>
 <body>
-<div x-data="platys">
+<div x-data="platys" @keydown.escape.window="closeDrawer()">
     <header class="platys-header">
         <div class="is-flex is-align-items-center px-5 py-3" style="gap:16px; flex-wrap:wrap;">
+            <img src="/assets/platys.png" alt="platys" style="height:40px; width:auto; background:#fff; border-radius:50%; padding:3px;">
             <span class="title is-5 has-text-white mb-0">platys</span>
 
             <input class="input" type="search" placeholder="Search services…"
@@ -43,6 +44,19 @@
                     </div>
                 </div>
             </div>
+            <label class="checkbox has-text-white" style="white-space:nowrap;">
+                <input type="checkbox" x-model="enabledOnly"> Enabled only
+            </label>
+            <span class="tag is-medium" x-text="`${enabledCount} enabled`"></span>
+            <div class="is-flex" style="margin-left:auto; gap:8px;">
+                <button class="button is-light" :class="{ 'is-loading': previewing }"
+                        @click="preview()">Preview</button>
+                <button class="button"
+                        :class="{ 'is-loading': generating, 'is-warning': isDirty, 'is-white': !isDirty }"
+                        @click="generate()">
+                    <span x-text="isDirty ? 'Generate config ●' : 'Generate config'"></span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -56,13 +70,17 @@
                     <div class="columns is-multiline">
                         <template x-for="svc in servicesIn(cat)" :key="svc.name">
                             <div class="column is-one-quarter">
-                                <div class="card" :class="{ 'is-enabled': svc.enabled }">
+                                <div class="card" :class="{ 'is-enabled': svc.enabled }"
+                                     @click="openDrawer(svc)" style="cursor:pointer">
                                     <div class="card-content p-4">
                                         <div class="is-flex is-justify-content-space-between is-align-items-center">
                                             <span class="has-text-weight-semibold" x-text="svc.display_name"></span>
-                                            <input type="checkbox" class="switch" x-model="svc.enabled">
+                                            <input type="checkbox" class="switch" x-model="svc.enabled" @click.stop>
                                         </div>
-                                        <p class="is-size-7 has-text-grey mt-2" x-text="svc.description"></p>
+                                        <div :data-tooltip="svc.description || null">
+                                            <p class="is-size-7 has-text-grey mt-2 desc-clamp"
+                                               x-text="svc.description"></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -76,6 +94,101 @@
             </p>
         </div>
     </section>
+    <!-- property drawer -->
+    <div class="drawer-backdrop" x-show="selected" x-transition.opacity
+         @click="closeDrawer()" style="display:none"></div>
+
+    <aside class="drawer-panel" x-show="selected" style="display:none"
+           x-transition:enter="drawer-trans" x-transition:enter-start="drawer-hidden"
+           x-transition:enter-end="drawer-shown"
+           x-transition:leave="drawer-trans" x-transition:leave-start="drawer-shown"
+           x-transition:leave-end="drawer-hidden">
+        <template x-if="selected">
+            <div class="drawer-inner">
+                <header class="drawer-head is-flex is-justify-content-space-between is-align-items-center">
+                    <div>
+                        <p class="title is-6 mb-1" x-text="selected.display_name"></p>
+                        <p class="is-size-7 has-text-grey" x-text="selected.category"></p>
+                        <p class="is-size-7 mt-1" x-text="selected.description"></p>
+                    </div>
+                    <button class="delete is-medium" @click="closeDrawer()"></button>
+                </header>
+
+                <div class="drawer-body">
+                    <label class="checkbox mb-4 is-block">
+                        <input type="checkbox" x-model="selected.enabled"> Enable this service
+                    </label>
+
+                    <template x-for="p in selected.properties" :key="p.key">
+                        <div class="field">
+                            <div class="is-flex is-align-items-center mb-1" style="gap:6px;">
+                                <label class="label is-small mb-0" x-text="p.key"></label>
+                                <button class="button is-ghost is-small p-0" style="height:auto; min-width:0; color:var(--platys-enabled);"
+                                        x-show="p.default != null && String(p.value) !== String(p.default)"
+                                        @click="p.value = p.default"
+                                        title="Reset to default">&#x21BA;</button>
+                            </div>
+                            <div class="control">
+                                <template x-if="isBool(p)">
+                                    <div class="is-flex" style="gap:16px;">
+                                        <label class="radio is-small">
+                                            <input type="radio" :checked="p.value === true" @change="p.value = true"> true
+                                        </label>
+                                        <label class="radio is-small">
+                                            <input type="radio" :checked="p.value === false" @change="p.value = false"> false
+                                        </label>
+                                        <label class="radio is-small">
+                                            <input type="radio" :checked="p.value === null" @change="p.value = null"> —
+                                        </label>
+                                    </div>
+                                </template>
+                                <template x-if="!isBool(p) && p.allowed_values">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="p.value">
+                                            <template x-for="opt in p.allowed_values" :key="opt">
+                                                <option :value="opt" x-text="opt"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </template>
+                                <template x-if="!isBool(p) && !p.allowed_values">
+                                    <input class="input is-small"
+                                           :type="p.sensitive ? 'password' : 'text'"
+                                           x-model="p.value"
+                                           :placeholder="p.default ?? ''">
+                                </template>
+                            </div>
+                            <p class="help" x-show="p.description" x-text="p.description"></p>
+                        </div>
+                    </template>
+
+                    <p x-show="selected.properties.length === 0" class="has-text-grey is-size-7">
+                        This service has no configurable properties.
+                    </p>
+                </div>
+            </div>
+        </template>
+    </aside>
+
+    <!-- generate result toast -->
+    <div class="notification" x-show="result" style="display:none; position:fixed; bottom:20px; right:20px; z-index:40; max-width:440px;"
+         :class="result?.success ? 'is-success' : 'is-danger'" x-transition>
+        <button class="delete" @click="result = null"></button>
+        <span x-text="result?.message"></span>
+    </div>
+    <div class="modal" :class="{ 'is-active': previewOpen }" @keydown.escape.window="previewOpen = false">
+        <div class="modal-background" @click="previewOpen = false"></div>
+        <div class="modal-card" style="width:80vw; max-width:860px;">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Config preview</p>
+                <button class="delete" @click="previewOpen = false"></button>
+            </header>
+            <section class="modal-card-body p-0">
+                <pre style="margin:0; max-height:70vh; overflow:auto; border-radius:0;" x-text="previewYaml"></pre>
+            </section>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

@@ -88,7 +88,7 @@ pub async fn run(args: InitArgs) -> Result<()> {
         config.platys.structure = args.structure.clone();
     }
 
-    let yaml_str = serialize_config(&config, true)?;
+    let yaml_str = serialize_config(&config, true, !args.enable_services.is_empty())?;
     let indented = add_root_indent(&yaml_str, 6);
     fs::write(&args.config_file, indented)
         .with_context(|| format!("failed to write {}", args.config_file))?;

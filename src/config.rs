@@ -162,10 +162,11 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
     Ok(cfg)
 }
 
+
 /// Serialize config into YAML file (default config.yml)
 /// cfg: the in memory parsed config
 /// sort: whether the services  should be sorted alphabetically
-pub fn serialize_config(cfg: &ParsedConfig, sort: bool) -> Result<String> {
+pub fn serialize_config(cfg: &ParsedConfig, sort: bool, enabled_only: bool) -> Result<String> {
     let mut root = yaml_serde::Mapping::new();
 
     // create platys section
@@ -188,16 +189,21 @@ pub fn serialize_config(cfg: &ParsedConfig, sort: bool) -> Result<String> {
     //create services
     for svc_name in service_names {
         let svc = &cfg.services[svc_name];
+        if enabled_only && !svc.enabled {
+            continue;
+        }
+        
         root.insert(
             Value::String(format!("{svc_name}_enable")),
             Value::Bool(svc.enabled),
         );
 
-        //append service's properties
-        for (property, value) in &svc.properties {
+        let mut prop_names: Vec<&String> = svc.properties.keys().collect();
+        if sort { prop_names.sort(); }
+        for property in prop_names {
             root.insert(
                 Value::String(format!("{svc_name}_{property}")),
-                value.clone(),
+                svc.properties[property].clone(),
             );
         }
     }
@@ -207,7 +213,7 @@ pub fn serialize_config(cfg: &ParsedConfig, sort: bool) -> Result<String> {
 
 //Structs
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct PlatysSection {
     #[serde(rename = "platform-name", default)]
     pub platform_name: String,
@@ -219,14 +225,14 @@ pub struct PlatysSection {
     pub structure: String,
 }
 
-#[derive(Debug, Default, serde::Serialize)]
+#[derive(Debug, Default, serde::Serialize, Clone)]
 pub struct ParsedConfig {
     pub platys: PlatysSection,
     pub globals: IndexMap<String, Value>,
     pub services: IndexMap<String, Service>,
 }
 
-#[derive(Debug, Default, serde::Serialize)]
+#[derive(Debug, Default, serde::Serialize, Clone)]
 pub struct Service {
     pub enabled: bool,
     pub properties: IndexMap<String, Value>,
@@ -314,7 +320,7 @@ mod tests {
           "};
 
         let cfg = parse_config(&yaml).expect("Should Parse");
-        let txt = serialize_config(&cfg, false).expect("Should serialize config");
+        let txt = serialize_config(&cfg, false, false).expect("Should serialize config");
         let reparsed_cfg = parse_config(&txt).expect("Should Parse");
 
         assert_eq!(&reparsed_cfg.services.len(), &cfg.services.len());
@@ -402,7 +408,7 @@ mod tests {
             },
         );
 
-        let out = serialize_config(&cfg, false).expect("serialize");
+        let out = serialize_config(&cfg, false, false).expect("serialize");
 
         let platys_pos = out.find("platys:").expect("platys present");
         let global_pos = out.find("use_timezone:").expect("global present");

@@ -19,6 +19,7 @@ pub(crate) struct ServiceDto {
 pub(crate) struct PropertyDto {
     pub(crate) key: String,
     pub(crate) value: serde_json::Value,
+    pub(crate) is_bool: bool,
     pub(crate) description: Option<String>,
     pub(crate) allowed_values: Option<Vec<String>>,
     pub(crate) sensitive: bool,
@@ -29,6 +30,12 @@ pub(crate) struct PropertyDto {
 #[derive(serde::Serialize)]
 pub(crate) struct ServicesResponse {
     pub(crate) services: Vec<ServiceDto>,
+}
+
+//What `GET /api/preview` returns
+#[derive(serde::Serialize)]
+pub(crate) struct PreviewResponse {
+    pub(crate) yaml: String,
 }
 
 // ── Value conversion helpers ────────────────────────────────────────────────

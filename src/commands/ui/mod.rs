@@ -14,7 +14,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use crate::commands::ui::handlers::{api_generate, api_services, asset, index};
+use crate::commands::ui::handlers::{api_generate, api_preview, api_services, asset, index};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -128,6 +128,7 @@ pub async fn run(args: UiArgs) -> Result<()> {
         .route("/assets/{file}", get(asset))
         .route("/api/services", get(api_services))
         .route("/api/generate", post(api_generate))
+        .route("/api/preview", post(api_preview))
         .with_state(state);
 
     // Create server and bind
