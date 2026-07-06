@@ -1,8 +1,10 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('platys', () => ({
-        selected: null,   // the service whose properties we're editing
+        selected: null,// the service whose properties we're editing
+        drawerSearch: '',
         openDrawer(svc) {
             this.selected = svc;
+            this.drawerSearch = '';
         },
         closeDrawer() {
             this.selected = null;
@@ -13,6 +15,7 @@ document.addEventListener('alpine:init', () => {
         categories: [],     // all category names (sorted)
         selectedCats: [],    // categories currently shown
         search: '',
+        platformName: '',
         catMenuOpen: false,
         generating: false,
         result: null,     // { success, message } from /api/generate
@@ -91,7 +94,7 @@ document.addEventListener('alpine:init', () => {
             this.result = null;
             try {
                 const payload = {
-                    platform_name: null,
+                    platform_name: this.platformName || null,
                     services: this.services.map(svc => ({
                         name: svc.name,
                         enabled: svc.enabled,
@@ -116,7 +119,7 @@ document.addEventListener('alpine:init', () => {
             this.previewing = true;
             try {
                 const payload = {
-                    platform_name: null,
+                    platform_name: this.platformName || null,
                     services: this.services.map(svc => ({
                         name: svc.name,
                         enabled: svc.enabled,
@@ -145,9 +148,46 @@ document.addEventListener('alpine:init', () => {
         get enabledCount() {
             return this.services.filter(s => s.enabled).length;
         },
+        enabledInCat(cat) {
+            return this.grouped[cat].filter(s => s.enabled).length;
+        },
 
         isBool(p) {
             return p.is_bool;
         },
+        filteredProperties(){
+          const q = this.drawerSearch.trim().toLowerCase();
+          if (!q) return this.selected.properties;
+          return this.selected.properties.filter(p =>
+              p.key.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)
+          )
+        },
+        _esc(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        },
+
+        _hlVal(raw) {
+            const s = raw.trim();
+            if (!s) return '';
+            if (s === 'true' || s === 'false') return `<span class="hl-bool">${this._esc(s)}</span>`;
+            if (s === 'null' || s === '~') return `<span class="hl-null">${this._esc(s)}</span>`;
+            if (/^-?\d+(\.\d+)?$/.test(s)) return `<span class="hl-num">${this._esc(s)}</span>`;
+            if (/^['"]/.test(s)) return `<span class="hl-str">${this._esc(raw)}</span>`;
+            return this._esc(raw);
+        },
+
+        highlightYaml(text) {
+            return text.split('\n').map(line => {
+                if (/^\s*#/.test(line))
+                    return `<span class="hl-comment">${this._esc(line)}</span>`;
+                const m = line.match(/^(\s*)([\w-]+)(\s*:\s*)(.*)$/);
+                if (m) {
+                    const [, indent, key, sep, val] = m;
+                    return `${this._esc(indent)}<span class="hl-key">${this._esc(key)}</span>${this._esc(sep)}${this._hlVal(val)}`;
+                }
+                return this._esc(line);
+            }).join('\n');
+        },
+
     }));
 });

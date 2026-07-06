@@ -17,7 +17,10 @@
             <span class="title is-5 has-text-white mb-0">platys</span>
 
             <input class="input" type="search" placeholder="Search services…"
-                   x-model="search" style="max-width:360px;">
+                   x-model="search" style="max-width:260px;">
+
+            <input class="input" type="text" placeholder="Platform name…"
+                   x-model="platformName" style="max-width:180px;">
 
             <div class="dropdown" :class="{ 'is-active': catMenuOpen }"
                  @click.outside="catMenuOpen = false">
@@ -66,7 +69,11 @@
 
             <template x-for="cat in visibleCategories" :key="cat">
                 <div class="mb-6">
-                    <h2 class="subtitle is-6 has-text-grey" style="text-transform:uppercase" x-text="cat"></h2>
+                    <h2 class="subtitle is-6 has-text-grey is-flex is-align-items-center" style="text-transform:uppercase; gap:8px;">
+                        <span x-text="cat"></span>
+                        <span class="tag is-light is-small" style="text-transform:none;"
+                              x-text="`${enabledInCat(cat)} / ${grouped[cat].length}`"></span>
+                    </h2>
                     <div class="columns is-multiline">
                         <template x-for="svc in servicesIn(cat)" :key="svc.name">
                             <div class="column is-one-quarter">
@@ -119,7 +126,12 @@
                         <input type="checkbox" x-model="selected.enabled"> Enable this service
                     </label>
 
-                    <template x-for="p in selected.properties" :key="p.key">
+                    <input class="input is-small mb-4" type="search"
+                           placeholder="Filter properties…"
+                           x-model="drawerSearch"
+                           x-show="selected.properties.length > 5">
+
+                    <template x-for="p in filteredProperties()" :key="p.key">
                         <div class="field">
                             <div class="is-flex is-align-items-center mb-1" style="gap:6px;">
                                 <label class="label is-small mb-0" x-text="p.key"></label>
@@ -165,6 +177,8 @@
                     <p x-show="selected.properties.length === 0" class="has-text-grey is-size-7">
                         This service has no configurable properties.
                     </p>
+                    <p x-show="filteredProperties().length === 0 && drawerSearch"
+                       class="has-text-grey is-size-7">No properties match.</p>
                 </div>
             </div>
         </template>
@@ -184,7 +198,7 @@
                 <button class="delete" @click="previewOpen = false"></button>
             </header>
             <section class="modal-card-body p-0">
-                <pre style="margin:0; max-height:70vh; overflow:auto; border-radius:0;" x-text="previewYaml"></pre>
+                <pre style="margin:0; max-height:70vh; overflow:auto; border-radius:0;" x-html="highlightYaml(previewYaml)"></pre>
             </section>
         </div>
     </div>

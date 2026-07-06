@@ -118,3 +118,11 @@ body {
 [data-tooltip]:hover::after {
     opacity: 1;
 }
+
+/* yaml syntax highlight  for preview window */
+.hl-key     { color: #3273dc; }
+.hl-str     { color: #259159; }
+.hl-num     { color: #e07b00; }
+.hl-bool    { color: #9b59b6; }
+.hl-null    { color: #aaa; }
+.hl-comment { color: #aaa; font-style: italic; }
