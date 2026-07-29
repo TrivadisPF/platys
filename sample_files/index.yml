@@ -8,6 +8,7 @@ configuration:
     source: external.yml
 
   - name: Internal Services
+    source: services.yml
     sections:
 
       - name: Stream Processing
@@ -31,6 +32,8 @@ configuration:
           - ksqldb-cli
           - materialize
           - risingwave
+          - risingwave-mcp
+          - risingwave-events-api
           - fluss
           - hstreamdb
           - flink

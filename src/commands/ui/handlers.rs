@@ -33,9 +33,7 @@ pub(crate) async fn asset(Path(file): Path<String>) -> Response {
 ///api/services
 pub(crate) async fn api_services(State(state): State<AppState>) -> Json<ServicesResponse> {
     let config = state.config.read().await;
-    //TODO : make true/false properties as a radio button (if null no selection) fallback to text
-    // field if type cannot be inferred
-    // validation -- > generate yml schema from file through claude 
+
     let services = config
         .services
         .iter()
@@ -47,6 +45,8 @@ pub(crate) async fn api_services(State(state): State<AppState>) -> Json<Services
                 description: meta.map(|m| m.description.clone()).unwrap_or_default(),
                 category: state.docs.categories.get(name).cloned().unwrap_or_default(),
                 enabled: svc.enabled,
+                tags: meta.map(|m| m.tags.clone()).unwrap_or_default(),
+                dependencies: meta.map(|m| m.dependencies.clone()).unwrap_or_default(),
                 properties: svc
                     .properties
                     .iter()

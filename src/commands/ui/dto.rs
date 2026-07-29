@@ -5,13 +5,14 @@
 
 #[derive(serde::Serialize)]
 pub(crate) struct ServiceDto {
-    pub(crate) name: String, // config name ex: KAFKA
-    pub(crate) display_name: String, // friendly name, if absent fallback to `name
+    pub(crate) name: String,
+    pub(crate) display_name: String,
     pub(crate) description: String,
     pub(crate) category: String,
     pub(crate) enabled: bool,
+    pub(crate) tags: Vec<String>,
     pub(crate) properties: Vec<PropertyDto>,
-
+    pub(crate) dependencies: Vec<String>,
 }
 
 

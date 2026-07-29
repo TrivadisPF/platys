@@ -4,45 +4,53 @@ use std::collections::HashMap;
 
 // Expected paths inside the Docker image once released.
 // For local development, use the --docs-path CLI flag instead.
-pub const SERVICES_YML_PATH: &str = "/opt/mdps-gen/vars/services.yml";
-pub const INDEX_YML_PATH: &str = "/opt/mdps-gen/vars/index.yml";
+pub const SERVICES_YML_PATH: &str = "/opt/mdps-gen/configuration/services.yml";
+pub const INDEX_YML_PATH: &str = "/opt/mdps-gen/configuration/index.yml";
 
 /** services.yml Model **/
 // Mirrors the top level of services.yml:
 //   services:
-//     akhq: ...
-//     kafka: ...
+//     - id: kafka
+//       name: Apache Kafka
+//       ...
 #[derive(Debug, Deserialize)]
 pub struct ServicesYaml {
-    pub services: HashMap<String, ServiceEntry>,
+    pub services: Vec<ServiceEntry>,
 }
 
-// One service block, e.g. the `akhq:` section
+// One service entry in the list
 #[derive(Debug, Deserialize)]
 pub struct ServiceEntry {
-    pub name: Option<String>, //display name like akhq
+    pub id: String,
+    pub name: Option<String>,
     pub description: Option<String>,
-    pub enable: Option<EnableSection>, // contains the config key name
-    pub properties: Option<HashMap<String, PropertyEntry>>,
+    #[serde(default)]
+    pub tags: Vec<String>,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    pub parameters: Option<Vec<ParameterEntry>>,
 }
 
-// The `enable:` block — tells us the config prefix
-//   enable:
-//     platys_init: AKHQ
-
+// One parameter entry, e.g. { name: KAFKA_enable, default: "false", ... }
 #[derive(Debug, Deserialize)]
-pub struct EnableSection {
-    pub platys_init: Option<String>, // name of the service (Kafka, akhq, etc.)
+struct ParameterEntry {
+    pub name: String,
+    pub description: Option<String>,
+    pub default: Option<yaml_serde::Value>,
+    pub allowed_values: Option<Vec<String>>,
+    #[serde(default)]
+    pub sensitive: bool,
+    pub applicable_when: Option<String>,
+    pub since: Option<String>,
 }
 
-// One property block, e.g. AKHQ_topic_page_size
-// #[serde(default)] on the struct means missing fields become Default::default()
+// Stored property metadata (key is the full param name, e.g. KAFKA_enable)
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct PropertyEntry {
     pub description: Option<String>,
-    pub default: Option<yaml_serde::Value>, // the raw YAML default value
+    pub default: Option<yaml_serde::Value>,
     pub allowed_values: Option<Vec<String>>,
-    #[serde(default)] // if not present in YAML, defaults to false
+    #[serde(default)]
     pub sensitive: bool,
     pub applicable_when: Option<String>,
     pub since: Option<String>,
@@ -84,10 +92,12 @@ pub struct CategorySection {
 
 /** inner structs **/
 
-//Holds display name and description for a service
+//Holds display name, description, and tags for a service
 pub struct ServiceMeta {
     pub name: String,
     pub description: String,
+    pub tags: Vec<String>,
+    pub dependencies: Vec<String>,
 }
 
 // The pre-built lookup — stored in AppState at server startup
@@ -120,17 +130,9 @@ impl PlatysIndex {
         // e.g. "akhq" -> "AKHQ"
         let mut slug_to_config: HashMap<String, String> = HashMap::new();
 
-        for (slug, entry) in svc_file.services {
-            // Prefer enable.platys_init for the config name because it's explicit.
-            // Fall back to uppercasing the slug — handles future services
-            // not yet documented (e.g. "new-service" -> "NEW_SERVICE")
-            let config_name = entry
-                .enable
-                .as_ref()
-                .and_then(|e| e.platys_init.clone())
-                .unwrap_or_else(|| slug.to_uppercase().replace('-', "_"));
-
-            slug_to_config.insert(slug.clone(), config_name.clone());
+        for entry in svc_file.services {
+            let config_name = entry.id.to_uppercase().replace('-', "_");
+            slug_to_config.insert(entry.id.clone(), config_name.clone());
 
             if let Some(display_name) = &entry.name {
                 services.insert(
@@ -138,13 +140,24 @@ impl PlatysIndex {
                     ServiceMeta {
                         name: display_name.clone(),
                         description: entry.description.clone().unwrap_or_default(),
+                        tags: entry.tags.clone(),
+                        dependencies: entry.dependencies.iter()
+                            .map(|s| s.to_uppercase().replace('-', "_"))
+                            .collect(),
                     },
                 );
             }
 
-            if let Some(props) = entry.properties {
-                for (prop_key, prop_entry) in props {
-                    properties.insert(prop_key, prop_entry);
+            if let Some(params) = entry.parameters {
+                for param in params {
+                    properties.insert(param.name, PropertyEntry {
+                        description: param.description,
+                        default: param.default,
+                        allowed_values: param.allowed_values,
+                        sensitive: param.sensitive,
+                        applicable_when: param.applicable_when,
+                        since: param.since,
+                    });
                 }
             }
         }
