@@ -97,7 +97,7 @@ pub(crate) async fn api_generate(
         }
     }
 
-    let yaml_str = match crate::config::serialize_config(&config, true, true) {
+    let yaml_str = match crate::config::serialize_config(&config, false, true) {
         Ok(yaml_str) => yaml_str,
         Err(e) => {
             return (
@@ -150,7 +150,7 @@ pub(crate) async fn api_preview(
             config.platys.platform_name = name.clone();
         }
     }
-    match crate::config::serialize_config(&config, true, true) {
+    match crate::config::serialize_config(&config, false, true) {
         Ok(yaml_str) => (StatusCode::OK, Json(PreviewResponse { yaml: yaml_str })),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
