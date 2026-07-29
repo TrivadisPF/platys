@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{Context, Result, bail};
 use bollard::Docker;
 use bollard::container::{
     Config, CreateContainerOptions, DownloadFromContainerOptions, InspectContainerOptions,
@@ -128,38 +128,9 @@ pub async fn pull_config(stack: &str, version: &str) -> Result<String> {
         // created container. We deliberately don't start the container, since
         // its entrypoint (generate.sh) would run and fail without an input config.
 
-        // Copy config file out of container
-        let mut byte_stream = docker.download_from_container(
-            &container_id,
-            Some(DownloadFromContainerOptions {
-                path: CONFIG_FILE_PATH,
-            }),
-        );
-
-        let mut tar_bytes: Vec<u8> = Vec::new();
-        while let Some(chunk) = byte_stream.next().await {
-            tar_bytes.extend_from_slice(&chunk.context("Failed to read tar stream")?);
-        }
-
-        // Extract config from tar
-        let mut archive = Archive::new(io::Cursor::new(tar_bytes));
-
-        if let Some(entry) = archive
-            .entries()
-            .context("Failed to iterate tar entries")?
-            .next()
-        {
-            let mut entry = entry.context("Bad tar entry")?;
-            let mut content = String::new();
-            entry
-                .read_to_string(&mut content)
-                .context("Failed to read config entry")?;
-            return Ok(content);
-        }
-
-        Err(anyhow!("config.yml not found in container tar"))
+        download_file_as_string(&docker, &container_id, CONFIG_FILE_PATH).await
     }
-    .await;
+        .await;
 
     // Always clean up, regardless of success or failure
     let _ = docker
@@ -220,6 +191,40 @@ pub async fn get_file(stack: &str, file_path: &str) -> Result<Vec<u8>> {
     Ok(tar_bytes)
 }
 
+/// Extracts the first file entry from a Docker `download_from_container`
+/// tar stream and returns its contents as a String.
+fn extract_single_file_tar(tar_bytes: Vec<u8>) -> Result<String> {
+    let mut archive = Archive::new(io::Cursor::new(tar_bytes));
+    let entry = archive
+        .entries()
+        .context("Failed to iterate tar entries")?
+        .next()
+        .context("Tar file was empty")?;
+
+    let mut entry = entry.context("Bad tar entry")?;
+    let mut content = String::new();
+    entry
+        .read_to_string(&mut content)
+        .context("Failed to read config entry from tar")?;
+
+    Ok(content)
+}
+
+async fn download_file_as_string(
+    docker: &Docker,
+    container_id: &str,
+    path: &str,
+) -> Result<String> {
+    let mut byte_stream =
+        docker.download_from_container(container_id, Some(DownloadFromContainerOptions { path }));
+    let mut tar_bytes: Vec<u8> = Vec::new();
+    while let Some(chunk) = byte_stream.next().await {
+        tar_bytes.extend_from_slice(&chunk.context("Failed to read tar stream")?);
+    }
+
+    extract_single_file_tar(tar_bytes)
+}
+
 pub async fn wait_for_container(docker: &Docker, id: &str) -> Result<()> {
     timeout(Duration::from_secs(120), async {
         loop {
@@ -238,6 +243,63 @@ pub async fn wait_for_container(docker: &Docker, id: &str) -> Result<()> {
         }
         Ok(())
     })
-    .await
-    .context("Container timed out after 120 seconds")?
+        .await
+        .context("Container timed out after 120 seconds")?
+}
+
+/// Pulls services.yml and index.yml from inside a freshly-created container,
+/// returning their raw YAML as (services, index)
+pub async fn pull_docs(stack: &str, version: &str) -> Result<(String, String)> {
+    let docker = init_client(stack, version).await?;
+
+    //force remove any existing containers
+    let _ = docker
+        .remove_container(
+            CONTAINER_NAME,
+            Some(RemoveContainerOptions {
+                force: true,
+                ..Default::default() // fill with default parameters
+            }),
+        )
+        .await; //ignore error as it might not exist
+
+    let response = docker.create_container(
+        Some(CreateContainerOptions {
+            name: CONTAINER_NAME,
+            platform: None,
+        }),
+        Config {
+            image: Some(format!("{stack}:{version}")),
+            tty: Some(true),
+            ..Default::default()
+        },
+    ).await
+        .context("Failed to create container")?;
+
+    let container_id = response.id.clone();
+
+    let result = async {
+        docker.start_container(&container_id, None::<StartContainerOptions<String>>)
+            .await
+            .context("Failed to start container")?;
+        wait_for_container(&docker, &container_id).await?;
+
+        let services = download_file_as_string(&docker, &container_id, crate::docs::SERVICES_YML_PATH).await?;
+        let index = download_file_as_string(&docker, &container_id, crate::docs::INDEX_YML_PATH).await?;
+
+        Ok((services, index))
+    }
+        .await;
+    // Always clean up, regardless of success or failure
+    let _ = docker
+        .remove_container(
+            &container_id,
+            Some(RemoveContainerOptions {
+                force: true,
+                ..Default::default()
+            }),
+        )
+        .await;
+
+    result
 }

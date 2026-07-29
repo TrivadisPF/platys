@@ -53,7 +53,7 @@ pub async fn run(mut args: GenArgs) -> Result<()> {
     // ── Check node limits ────────────────────────────────────────────────
     for (svc_name, svc) in &config.services {
         for (prop_name, value) in &svc.properties {
-            let full_key = format!("{}:{}", svc_name, prop_name);
+            let full_key = format!("{svc_name}_{prop_name}");
             if let Some(max) = node_limit(&full_key) {
                 let count = value
                     .as_u64()

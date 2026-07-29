@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-use crate::commands::{clean, generate, init, list_services, stacks, version};
+use crate::commands::{clean, generate, init, list_services, stacks, ui, version};
 
 pub const DEFAULT_STACK: &str = "trivadis/platys-modern-data-platform";
 
@@ -50,6 +50,8 @@ pub enum Commands {
 
     /// Lists the predefined stacks available for the init command
     Stacks(stacks::StacksArgs),
+
+    Ui(ui::UiArgs),
 }
 
 impl Cli {
@@ -64,6 +66,7 @@ impl Cli {
             Commands::Clean(args) => clean::run(args).await,
             Commands::ListServices(args) => list_services::run(args).await,
             Commands::Stacks(args) => stacks::run(args).await,
+            Commands::Ui(args) => ui::run(args).await,
         }
     }
 }
