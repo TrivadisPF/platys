@@ -110,7 +110,51 @@ fn is_service_name(s: &str) -> bool {
 fn is_property_name(s: &str) -> bool {
     !s.is_empty()
         && s.bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+            .all(|b| b.is_ascii_alphanumeric() || b == b'_')
+}
+
+/// Scan raw YAML text and collect the comment/blank block that immediately
+/// precedes each key. Keys are stored trimmed so they match serialized output.
+fn extract_key_comments(raw: &str) -> IndexMap<String, String> {
+    let mut result = IndexMap::new();
+    let mut pending = String::new();
+
+    for line in raw.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('#') || trimmed.is_empty() {
+            pending.push_str(trimmed);
+            pending.push('\n');
+        } else if !pending.is_empty() {
+            if let Some(key) = trimmed.split(':').next().map(|s| s.trim().to_string()) {
+                result.insert(key, std::mem::take(&mut pending));
+            } else {
+                pending.clear();
+            }
+        }
+    }
+    result
+}
+
+/// Post-process a serialized YAML string, inserting stored comment blocks
+/// before each matching key line, matching that line's indentation.
+fn insert_comments(yaml: &str, comments: &IndexMap<String, String>) -> String {
+    let mut out = String::with_capacity(yaml.len());
+    for line in yaml.lines() {
+        let trimmed = line.trim();
+        if let Some(key) = trimmed.split(':').next().map(|s| s.trim()) {
+            if let Some(block) = comments.get(key) {
+                let indent = &line[..line.len() - line.trim_start().len()];
+                for comment_line in block.lines() {
+                    out.push_str(indent);
+                    out.push_str(comment_line);
+                    out.push('\n');
+                }
+            }
+        }
+        out.push_str(line);
+        out.push('\n');
+    }
+    out
 }
 
 pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
@@ -159,6 +203,7 @@ pub fn parse_config(raw: &str) -> Result<ParsedConfig> {
         cfg.globals.insert(key, v); // not platys, service or property section, fallback into globals
     }
 
+    cfg.comments = extract_key_comments(raw);
     Ok(cfg)
 }
 
@@ -208,7 +253,8 @@ pub fn serialize_config(cfg: &ParsedConfig, sort: bool, enabled_only: bool) -> R
         }
     }
 
-    yaml_serde::to_string(&root).context("Failed to serialize config")
+    let yaml = yaml_serde::to_string(&root).context("Failed to serialize config")?;
+    Ok(insert_comments(&yaml, &cfg.comments))
 }
 
 //Structs
@@ -230,6 +276,8 @@ pub struct ParsedConfig {
     pub platys: PlatysSection,
     pub globals: IndexMap<String, Value>,
     pub services: IndexMap<String, Service>,
+    #[serde(skip)]
+    pub comments: IndexMap<String, String>,
 }
 
 #[derive(Debug, Default, serde::Serialize, Clone)]
