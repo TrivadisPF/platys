@@ -47,6 +47,31 @@
                     </div>
                 </div>
             </div>
+            <div class="dropdown" :class="{ 'is-active': tagMenuOpen }"
+                 x-show="allTags.length > 0"
+                 @click.outside="tagMenuOpen = false">
+                <div class="dropdown-trigger">
+                    <button class="button" type="button" @click="tagMenuOpen = !tagMenuOpen">
+                        <span x-text="selectedTags.length ? `Tags (${selectedTags.length})` : 'Tags'"></span>
+                        <span class="icon is-small">▾</span>
+                    </button>
+                </div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-content">
+                        <div class="dropdown-item">
+                            <button class="button is-small is-light" @click="clearTags()">Clear</button>
+                        </div>
+                        <hr class="dropdown-divider">
+                        <template x-for="tag in allTags" :key="tag">
+                            <label class="dropdown-item is-flex is-align-items-center" style="gap:8px; cursor:pointer;">
+                                <input type="checkbox" :checked="selectedTags.includes(tag)" @change="toggleTag(tag)">
+                                <span :class="tagClass(tag)" x-text="tag"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
             <label class="checkbox has-text-white" style="white-space:nowrap;">
                 <input type="checkbox" x-model="enabledOnly"> Enabled only
             </label>
@@ -73,20 +98,34 @@
                         <span x-text="cat"></span>
                         <span class="tag is-light is-small" style="text-transform:none;"
                               x-text="`${enabledInCat(cat)} / ${grouped[cat].length}`"></span>
+                        <button class="button is-small is-light" style="text-transform:none; font-size:0.7rem;"
+                                @click.stop="toggleCatServices(cat)"
+                                x-text="isCatAllEnabled(cat) ? 'Disable all' : 'Enable all'"></button>
                     </h2>
                     <div class="columns is-multiline">
                         <template x-for="svc in servicesIn(cat)" :key="svc.name">
                             <div class="column is-one-quarter">
-                                <div class="card" :class="{ 'is-enabled': svc.enabled }"
+                                <div class="card" :class="{ 'is-enabled': svc.enabled, 'has-dep-warning': missingDeps(svc).length > 0 }"
                                      @click="openDrawer(svc)" style="cursor:pointer">
                                     <div class="card-content p-4">
                                         <div class="is-flex is-justify-content-space-between is-align-items-center">
-                                            <span class="has-text-weight-semibold" x-text="svc.display_name"></span>
+                                            <div class="is-flex is-align-items-center" style="gap:6px; min-width:0;">
+                                                <span class="has-text-weight-semibold" x-text="svc.display_name"></span>
+                                                <span x-show="missingDeps(svc).length > 0"
+                                                      class="tag is-warning is-small"
+                                                      :data-tooltip="'Missing: ' + missingDeps(svc).join(', ')"
+                                                      style="cursor:default;">⚠ deps</span>
+                                            </div>
                                             <input type="checkbox" class="switch" x-model="svc.enabled" @click.stop>
                                         </div>
                                         <div :data-tooltip="svc.description || null">
                                             <p class="is-size-7 has-text-grey mt-2 desc-clamp"
                                                x-text="svc.description"></p>
+                                        </div>
+                                        <div class="tags mt-2" x-show="svc.tags.length > 0">
+                                            <template x-for="tag in svc.tags" :key="tag">
+                                                <span :class="tagClass(tag) + ' is-small'" x-text="tag"></span>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>

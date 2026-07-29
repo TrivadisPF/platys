@@ -17,6 +17,18 @@ document.addEventListener('alpine:init', () => {
         search: '',
         platformName: '',
         catMenuOpen: false,
+        allTags: [],         // unique tags found across all services (sorted)
+        tagColorMap: {},     // tag -> Bulma color classes, assigned dynamically
+        selectedTags: [],    // active tag filter (empty = no filter)
+        tagMenuOpen: false,
+        _TAG_PALETTE: [
+            'is-success is-light',
+            'is-link is-light',
+            'is-warning is-light',
+            'is-danger is-light',
+            'is-primary is-light',
+            'is-info is-light',
+        ],
         generating: false,
         result: null,     // { success, message } from /api/generate
         previewYaml: '',
@@ -49,20 +61,47 @@ document.addEventListener('alpine:init', () => {
 
         group() {
             const groups = {};
+            const tagSet = new Set();
             for (const svc of this.services) {
                 const cat = svc.category || 'Other';
                 (groups[cat] ||= []).push(svc);
+                for (const t of svc.tags) tagSet.add(t);
             }
             this.grouped = groups;
             this.categories = Object.keys(groups).sort();
+            this.allTags = [...tagSet].sort();
+            this.tagColorMap = Object.fromEntries(
+                this.allTags.map((t, i) => [t, this._TAG_PALETTE[i % this._TAG_PALETTE.length]])
+            );
         },
 
         matches(svc) {
             const q = this.search.trim().toLowerCase();
-            if (!q) return true;
-            return (svc.display_name || '').toLowerCase().includes(q)
+            const textMatch = !q
+                || (svc.display_name || '').toLowerCase().includes(q)
                 || (svc.name || '').toLowerCase().includes(q);
+            const tagMatch = this.selectedTags.length === 0
+                || svc.tags.some(t => this.selectedTags.includes(t));
+            return textMatch && tagMatch;
         },
+
+        missingDeps(svc) {
+            if (!svc.enabled || !svc.dependencies.length) return [];
+            return svc.dependencies.filter(dep => {
+                const s = this.services.find(s => s.name === dep);
+                return !s || !s.enabled;
+            });
+        },
+
+        tagClass(tag) {
+            return 'tag ' + (this.tagColorMap[tag] || 'is-light');
+        },
+        toggleTag(tag) {
+            const i = this.selectedTags.indexOf(tag);
+            if (i === -1) this.selectedTags.push(tag);
+            else this.selectedTags.splice(i, 1);
+        },
+        clearTags() { this.selectedTags = []; },
 
         servicesIn(cat) {
             return this.grouped[cat].filter(
@@ -88,6 +127,13 @@ document.addEventListener('alpine:init', () => {
         },
         clearCats() {
             this.selectedCats = [];
+        },
+        isCatAllEnabled(cat) {
+            return this.grouped[cat].every(s => s.enabled);
+        },
+        toggleCatServices(cat) {
+            const enable = !this.isCatAllEnabled(cat);
+            this.grouped[cat].forEach(s => s.enabled = enable);
         },
         async generate() {
             this.generating = true;
