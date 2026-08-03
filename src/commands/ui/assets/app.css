@@ -1,0 +1,132 @@
+:root {
+    --platys-accent: #402f7f;
+    --platys-enabled: #d45ca0;
+}
+
+body {
+    background-color: #f5f6f8;
+}
+
+.navbar.is-platys {
+    background-color: var(--platys-accent);
+}
+
+.card {
+    height: 100%;
+}
+
+.card.is-enabled {
+    box-shadow: 0 0 0 2px var(--platys-enabled);
+}
+
+.card.has-dep-warning {
+    box-shadow: 0 0 0 2px #e07b00;
+}
+
+.switch {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--platys-enabled);
+    cursor: pointer;
+}
+
+.platys-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: var(--platys-accent);
+}
+
+.dropdown-content label.dropdown-item {
+    cursor: pointer;
+}
+
+.drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
+    z-index: 30;
+}
+
+.drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 440px;
+    max-width: 92vw;
+    background: #fff;
+    z-index: 31;
+    box-shadow: -2px 0 16px rgba(0, 0, 0, .18);
+}
+
+.drawer-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.drawer-head {
+    padding: 16px;
+    border-bottom: 1px solid #e3e6ea;
+}
+
+.drawer-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.drawer-trans {
+    transition: transform .22s ease;
+}
+
+.drawer-hidden {
+    transform: translateX(100%);
+}
+
+.drawer-shown {
+    transform: translateX(0);
+}
+
+.desc-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: #363636;
+    color: #fff;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 220px;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 50;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+/* yaml syntax highlight  for preview window */
+.hl-key     { color: #3273dc; }
+.hl-str     { color: #259159; }
+.hl-num     { color: #e07b00; }
+.hl-bool    { color: #9b59b6; }
+.hl-null    { color: #aaa; }
+.hl-comment { color: #aaa; font-style: italic; }
